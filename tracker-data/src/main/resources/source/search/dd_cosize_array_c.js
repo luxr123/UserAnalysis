@@ -1,0 +1,16 @@
+var dd_cosize=[];
+var dd_cosizeArr=[];
+dd_cosize['7']='10000人以上';
+dd_cosizeArr['0']='7';
+dd_cosize['6']='5000-10000人';
+dd_cosizeArr['1']='6';
+dd_cosize['5']='1000-5000人';
+dd_cosizeArr['2']='5';
+dd_cosize['4']='500-1000人';
+dd_cosizeArr['3']='4';
+dd_cosize['3']='150-500人';
+dd_cosizeArr['4']='3';
+dd_cosize['2']='50-150人';
+dd_cosizeArr['5']='2';
+dd_cosize['1']='少于50人';
+dd_cosizeArr['6']='1';

@@ -1,0 +1,25 @@
+option java_package = "com.tracker.coprocessor.generated";
+option java_outer_classname = "TopProtos";
+option java_generic_services = true;
+option java_generate_equals_and_hash = true;
+option optimize_for = SPEED;
+
+import "Client.proto";
+
+message TopRequest {
+   required Scan scan = 1;
+}
+
+message KV{
+	required string key = 1;
+	required int32  value = 2;
+}
+
+message TopResponse {
+  repeated KV kv = 1;
+}
+
+service TopService {
+  	rpc getTop(TopRequest)
+    returns (TopResponse);
+}

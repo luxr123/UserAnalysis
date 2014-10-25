@@ -1,0 +1,4 @@
+jar uvf ./target/tracker-storm-0.0.1-SNAPSHOT.jar -C target/classes /
+jar uvf ./target/tracker-storm-0.0.1-SNAPSHOT.jar -C /home/hadoop/workspace/tracker/tracker-common/target/classes /
+jar uvf ./target/tracker-storm-0.0.1-SNAPSHOT.jar -C /home/hadoop/workspace/tracker/tracker-db/target/classes /
+jar uvf ./target/tracker-storm-0.0.1-SNAPSHOT.jar -C lib /

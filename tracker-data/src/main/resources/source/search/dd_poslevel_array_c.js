@@ -1,0 +1,12 @@
+var poslevel=[];
+var poslevelArr=[];
+poslevel['90']='总裁';
+poslevelArr['0']='90';
+poslevel['80']='总监';
+poslevelArr['1']='80';
+poslevel['70']='经理';
+poslevelArr['2']='70';
+poslevel['60']='主管';
+poslevelArr['3']='60';
+poslevel['50']='专业人员';
+poslevelArr['4']='50';

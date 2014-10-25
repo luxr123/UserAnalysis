@@ -1,0 +1,16 @@
+var dd_commissiontype=[];
+var dd_commissiontypeArr=[];
+dd_commissiontype['11']='2万以下';
+dd_commissiontypeArr['0']='11';
+dd_commissiontype['12']='2-4万';
+dd_commissiontypeArr['1']='12';
+dd_commissiontype['13']='4-10万';
+dd_commissiontypeArr['2']='13';
+dd_commissiontype['14']='10-20万';
+dd_commissiontypeArr['3']='14';
+dd_commissiontype['15']='20-50万';
+dd_commissiontypeArr['4']='15';
+dd_commissiontype['16']='50万以上';
+dd_commissiontypeArr['5']='16';
+dd_commissiontype['99']='自定义';
+dd_commissiontypeArr['6']='99';

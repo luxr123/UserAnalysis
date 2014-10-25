@@ -1,0 +1,29 @@
+/**
+    protoc.exe --java_out=./ Examples.proto
+*/
+option java_package = "com.tracker.coprocessor.generated";
+option java_outer_classname = "FilterRowCountProtos";
+option java_generic_services = true;
+option java_generate_equals_and_hash = true;
+option optimize_for = SPEED;
+
+import "Client.proto";
+
+message CountRequest {
+   required Scan scan = 1;
+   required int32 fieldIndex = 2;
+}
+
+message CountResponse {
+  repeated KV kv = 1;
+}
+
+message KV{
+    required string key = 1;
+    required int64 value = 2;
+}
+
+service RowCountService {
+  rpc getRowCount(CountRequest)
+    returns (CountResponse);
+}
