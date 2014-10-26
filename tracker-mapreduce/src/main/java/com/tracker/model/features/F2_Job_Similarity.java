@@ -120,7 +120,8 @@ public class F2_Job_Similarity {
 				squareB += valB * valB;
 			}
 			double ret = mulV / (Math.sqrt(squareA) * Math.sqrt(squareB));
-			context.write(key, new DoubleWritable(ret));
+			if (ret >= 0.01)// 满足相似度阈值
+				context.write(key, new DoubleWritable(ret));
 		}
 	}
 
