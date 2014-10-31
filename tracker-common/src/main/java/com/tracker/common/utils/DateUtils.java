@@ -1,5 +1,6 @@
 package com.tracker.common.utils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -7,6 +8,16 @@ import java.util.GregorianCalendar;
 import java.util.List;
 
 public class DateUtils {
+	
+	/**
+	 * 获得当天日期
+	 */
+	public static String getToday() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
+		Calendar cal = Calendar.getInstance();
+		return sdf.format(cal.getTime());
+	}
+	
 	/**
 	 * 根据起始时间获取日期（天）集合
 	 * @param startDay {YYYYMMDD}

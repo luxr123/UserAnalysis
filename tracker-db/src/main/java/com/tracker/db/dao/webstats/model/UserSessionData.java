@@ -1,5 +1,7 @@
 package com.tracker.db.dao.webstats.model;
 
+import java.util.zip.CRC32;
+
 import com.tracker.db.simplehbase.annotation.HBaseColumn;
 import com.tracker.db.simplehbase.annotation.HBaseTable;
 import com.tracker.db.util.RowUtil;
@@ -9,9 +11,12 @@ public class UserSessionData {
 	public static enum Columns{
 		startVisitTime, lastVisitTime, lastPageSign, visitPageCount, kpiDimesion
 	}
-	public static final int DATE_INDEX = 0;
-	public static final int WEB_ID_INDEX = 1;
-	public static final int COOKIE_ID_INDEX = 2;
+	
+	public static final int COOKIE_ID_INDEX = 1;
+	public static final int WEB_ID_INDEX = 2;
+	public static final int DATE_INDEX = 3;
+	
+	public static final int hashValue = 30;
 	
 	@HBaseColumn(qualifier = "startVisitTime")
 	public Long startVisitTime;
@@ -27,11 +32,9 @@ public class UserSessionData {
 	public String kpiDimesion;
 	
 	public static String generateKey(String date, String webId, String cookieId){
-		return generateRowPrefix(date) + webId + RowUtil.ROW_SPLIT + cookieId;
-	}
-	
-	public static String generateRowPrefix(String date){
-		return date  + RowUtil.ROW_SPLIT;
+		CRC32 crc32 = new CRC32();
+		crc32.update(cookieId.getBytes());
+		return crc32.getValue() % hashValue + RowUtil.ROW_SPLIT + cookieId + RowUtil.ROW_SPLIT + webId + RowUtil.ROW_SPLIT + date;
 	}
 	
 	public String getKpiDimesion() {
@@ -64,5 +67,4 @@ public class UserSessionData {
 	public void setStartVisitTime(Long startVisitTime) {
 		this.startVisitTime = startVisitTime;
 	}
-
 }

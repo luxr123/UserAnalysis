@@ -7,34 +7,43 @@ import com.tracker.db.simplehbase.annotation.HBaseTable;
 import com.tracker.db.util.RowUtil;
 
 /**
- * 搜索条件
- * @author jason.hua
+ * 文件名：SiteSearchCondition
+ * 创建人：jason.hua
+ * 创建日期：2014-10-27 上午11:44:47
+ * 功能描述： 搜索条件数据字典
  *
  */
 @HBaseTable(tableName = "d_dictionary", defaultFamily = "data")
 public class SiteSearchCondition {
-	
+	/**
+	 * row中各个字段index值
+	 */
 	public static final int SE_ID_INDEX = 1;
 	public static final int SEARCH_TYPE_INDEX = 2;
 	public static final int SEARCH_CONDITION_INDEX = 3;
 	
 	@HBaseColumn(qualifier = "seConType")
-	public Integer seConType;
+	public Integer seConType; //搜索条件类型
 	
 	@HBaseColumn(qualifier = "name")
-	public String name;
+	public String name; //搜索条件中文名
 	
 	@HBaseColumn(qualifier = "field")
-	public String field;
+	public String field; //搜索条件字段（日志中的字段名）
 	
 	@HBaseColumn(qualifier = "isKeyword")
-	public Integer isKeyword;
+	public Integer isKeyword; //是否是关键词搜索
 	
 	@HBaseColumn(qualifier = "sortedNum")
-	public Integer sortedNum;
+	public Integer sortedNum; //页面上展示顺序编号
 	
 	/**
-	 * 生成搜索条件row
+	 * 函数名：generateRow
+	 * 功能描述：生成搜索条件row
+	 * @param seId
+	 * @param searchType
+	 * @param seConType
+	 * @return
 	 */
 	public static String generateRow(Integer seId, Integer searchType, Integer seConType){
 		return generateRowPrefix(seId, searchType) + seConType;

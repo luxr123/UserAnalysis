@@ -173,14 +173,14 @@ public class GenericUDAFGeatherFeature extends AbstractGenericUDAFResolver {
 			return ((FeatureAgg) agg).content;
 		}
 
-		@SuppressWarnings("unchecked")
 		@Override
 		public void merge(AggregationBuffer agg, Object partial) throws HiveException {
 			List<Map<Object, HashMap<Object, Object>>> aggList = ((FeatureAgg) agg).content;
 			Map<Object, HashMap<Object, Object>> featureAgg = aggList.get(0);
 			Map<Object, HashMap<Object, Object>> timeLenAgg = aggList.get(1);
 
-			List<Map<Object, HashMap<Object, Object>>> partialResult = (List<Map<Object, HashMap<Object, Object>>>) intermediateListInputTypeOI.getList(partial);
+			List<Map<Object, HashMap<Object, Object>>> partialResult = (List<Map<Object, HashMap<Object, Object>>>) intermediateListInputTypeOI
+					.getList(partial);
 
 			Map<?, ?> featureResult = (Map<?, ?>) ObjectInspectorUtils.copyToStandardObject(partialResult.get(0),
 					intermediateMapInputTypeOI);
@@ -236,6 +236,7 @@ public class GenericUDAFGeatherFeature extends AbstractGenericUDAFResolver {
 			List<Map<Object, HashMap<Object, Object>>> aggList = ((FeatureAgg) agg).content;
 			Map<Object, HashMap<Object, Object>> featureAgg = aggList.get(0);
 			Map<Object, HashMap<Object, Object>> timeLenAgg = aggList.get(1);
+
 			Map<Object, Object> freqAllSumMap = new HashMap<Object, Object>();
 			Map<Object, Object> maxTFMap = new HashMap<Object, Object>();
 

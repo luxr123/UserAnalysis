@@ -4,9 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import com.google.common.collect.Lists;
 import com.tracker.api.Servers;
@@ -14,7 +11,6 @@ import com.tracker.api.thrift.web.EntryPageStats;
 import com.tracker.api.thrift.web.PageStats;
 import com.tracker.api.thrift.web.WebStats;
 import com.tracker.api.util.NumericUtil;
-import com.tracker.common.constant.website.ReferrerType;
 import com.tracker.common.constant.website.SysEnvType;
 import com.tracker.common.constant.website.VisitorType;
 import com.tracker.db.dao.kpi.SummableKpiDao;
@@ -24,6 +20,9 @@ import com.tracker.db.dao.kpi.UnSummableKpiHBaseDaoImpl;
 import com.tracker.db.dao.kpi.entity.UnSummableKpiParam;
 import com.tracker.db.dao.kpi.model.PageSummableKpi;
 import com.tracker.db.dao.kpi.model.WebSiteSummableKpi;
+import com.tracker.db.dao.kpi.model.WebSiteSummableKpi.BasicRowGenerator;
+import com.tracker.db.dao.kpi.model.WebSiteSummableKpi.KWRowGenerator;
+import com.tracker.db.dao.kpi.model.WebSiteSummableKpi.SysEnvRowGenerator;
 import com.tracker.db.util.RowUtil;
 
 /**
@@ -44,16 +43,8 @@ public class WebSiteRTDayServiceImpl implements WebSiteService{
 		Map<String, WebStats> result = new HashMap<String, WebStats>();
 		String rowPrefix = WebSiteSummableKpi.BasicRowGenerator.generateRowPrefix(time, String.valueOf(webId));
 		Map<String, Long> pvMap = summableKpiDao.getWebSitePVKpi(Lists.newArrayList(rowPrefix), WebSiteSummableKpi.BasicRowGenerator.USER_TYPE_INDEX);
-		
-		CountDownLatch allDone = new CountDownLatch(2);
 		Map<String, Long> ipMap = unSummableKpiDao.getWebSiteUnSummableKpi(UnSummableKpiParam.KPI_IP, time, String.valueOf(webId), UnSummableKpiParam.SIGN_WEB_USER, null, new ArrayList<String>(pvMap.keySet()));
 		Map<String, Long> uvMap = unSummableKpiDao.getWebSiteUnSummableKpi(UnSummableKpiParam.KPI_UV, time, String.valueOf(webId), UnSummableKpiParam.SIGN_WEB_USER, null, new ArrayList<String>(pvMap.keySet()));
-		
-		try {
-			allDone.await();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
 		
 		for(String userType: pvMap.keySet()){
 			WebStats stats = new WebStats();
@@ -130,13 +121,12 @@ public class WebSiteRTDayServiceImpl implements WebSiteService{
 		
 		String rowPrefix = null;
 		if(visitorType == null)
-			rowPrefix = WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId));
+			rowPrefix = BasicRowGenerator.generateRowPrefix(time, String.valueOf(webId));
 		else 
-			rowPrefix = WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType);
-		Map<String, WebSiteSummableKpi> kpiResultMap = summableKpiDao.getWebSiteKpi(Lists.newArrayList(rowPrefix), WebSiteSummableKpi.RefRowGenerator.REF_TYPE_INDEX);
+			rowPrefix = BasicRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType);
+		Map<String, WebSiteSummableKpi> kpiResultMap = summableKpiDao.getWebSiteKpi(Lists.newArrayList(rowPrefix), BasicRowGenerator.REF_TYPE_INDEX);
 		Map<String, Long> ipMap = unSummableKpiDao.getWebSiteUnSummableKpi(UnSummableKpiParam.KPI_IP, time, String.valueOf(webId), UnSummableKpiParam.SIGN_WEB_REF, visitorType, new ArrayList<String>(kpiResultMap.keySet()));
 		Map<String, Long> uvMap = unSummableKpiDao.getWebSiteUnSummableKpi(UnSummableKpiParam.KPI_UV, time, String.valueOf(webId), UnSummableKpiParam.SIGN_WEB_REF, visitorType, new ArrayList<String>(kpiResultMap.keySet()));
-
 		
 		for(String refType: kpiResultMap.keySet()){ 
 			WebStats stats = new WebStats();
@@ -152,15 +142,14 @@ public class WebSiteRTDayServiceImpl implements WebSiteService{
 			Integer timeType, String time, Integer refType,
 			Integer visitorType, Integer topNum) {
 		Map<String, WebStats> result = new HashMap<String, WebStats>();
-		List<String> rowPrefixList = null;
+		String rowPrefix = null;
 		if(visitorType == null){
-			rowPrefixList = Lists.newArrayList(WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId), VisitorType.NEW_VISITOR.getValue(), refType));
-			rowPrefixList.add(WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId), VisitorType.OLD_VISITOR.getValue(), refType));
+			rowPrefix = BasicRowGenerator.generateRowPrefix(time, String.valueOf(webId));
 		} else {
-			rowPrefixList = Lists.newArrayList(WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType, refType));
+			rowPrefix = BasicRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType);
 		}
 		
-		Map<String, WebSiteSummableKpi> kpiResultMap = summableKpiDao.getWebSiteTopKpi(rowPrefixList, WebSiteSummableKpi.RefRowGenerator.REF_DOMAIN_INDEX, topNum);
+		Map<String, WebSiteSummableKpi> kpiResultMap = summableKpiDao.getWebSiteTopKpi(Lists.newArrayList(rowPrefix), BasicRowGenerator.REF_DOMAIN_INDEX, topNum);
 		Map<String, Long> ipMap = unSummableKpiDao.getWebSiteUnSummableKpi(UnSummableKpiParam.KPI_IP, time, String.valueOf(webId), UnSummableKpiParam.SIGN_WEB_REF_DOMAIN + RowUtil.FIELD_SPLIT + refType, visitorType, new ArrayList<String>(kpiResultMap.keySet()));
 		Map<String, Long> uvMap = unSummableKpiDao.getWebSiteUnSummableKpi(UnSummableKpiParam.KPI_UV, time, String.valueOf(webId), UnSummableKpiParam.SIGN_WEB_REF_DOMAIN + RowUtil.FIELD_SPLIT + refType, visitorType, new ArrayList<String>(kpiResultMap.keySet()));
 
@@ -182,22 +171,21 @@ public class WebSiteRTDayServiceImpl implements WebSiteService{
 		List<String> rowPrefixList = new ArrayList<String>();
 		if(visitorType == null){
 			if(seDomain == null){
-				rowPrefixList.add(WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId), VisitorType.NEW_VISITOR.getValue(), ReferrerType.SEARCH_ENGINE.getValue()));
-				rowPrefixList.add(WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId), VisitorType.OLD_VISITOR.getValue(), ReferrerType.SEARCH_ENGINE.getValue()));
+				rowPrefixList.add(KWRowGenerator.generateRowPrefix(time, String.valueOf(webId)));
 			} else {
-				rowPrefixList.add(WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId), VisitorType.NEW_VISITOR.getValue(), ReferrerType.SEARCH_ENGINE.getValue(), seDomain));
-				rowPrefixList.add(WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId), VisitorType.OLD_VISITOR.getValue(), ReferrerType.SEARCH_ENGINE.getValue(), seDomain));
+				rowPrefixList.add(KWRowGenerator.generateRowPrefix(time, String.valueOf(webId), VisitorType.NEW_VISITOR.getValue(), seDomain));
+				rowPrefixList.add(KWRowGenerator.generateRowPrefix(time, String.valueOf(webId), VisitorType.OLD_VISITOR.getValue(), seDomain));
 			}
 		} else {
 			if(seDomain == null){
-				rowPrefixList.add(WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType, ReferrerType.SEARCH_ENGINE.getValue()));
+				rowPrefixList.add(KWRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType));
 			} else {
-				rowPrefixList.add(WebSiteSummableKpi.RefRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType, ReferrerType.SEARCH_ENGINE.getValue(), seDomain));
+				rowPrefixList.add(KWRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType, seDomain));
 			}
 		}
 		
 		if(seDomain == null) seDomain = "";
-		Map<String, WebSiteSummableKpi> kpiResultMap = summableKpiDao.getWebSiteTopKpi(rowPrefixList, WebSiteSummableKpi.RefRowGenerator.REF_KEYWORD_INDEX, topNum);
+		Map<String, WebSiteSummableKpi> kpiResultMap = summableKpiDao.getWebSiteTopKpi(rowPrefixList, KWRowGenerator.REF_KEYWORD_INDEX, topNum);
 		Map<String, Long> ipMap = unSummableKpiDao.getWebSiteUnSummableKpi(UnSummableKpiParam.KPI_IP, time, String.valueOf(webId), UnSummableKpiParam.SIGN_WEB_REF_KEYWORD + RowUtil.FIELD_SPLIT + seDomain, visitorType, new ArrayList<String>(kpiResultMap.keySet()));
 		Map<String, Long> uvMap = unSummableKpiDao.getWebSiteUnSummableKpi(UnSummableKpiParam.KPI_UV, time, String.valueOf(webId), UnSummableKpiParam.SIGN_WEB_REF_KEYWORD + RowUtil.FIELD_SPLIT + seDomain, visitorType, new ArrayList<String>(kpiResultMap.keySet()));
 
@@ -338,35 +326,28 @@ public class WebSiteRTDayServiceImpl implements WebSiteService{
 			String time, Integer sysType, Integer visitorType, Integer topNum) {
 		Map<String, WebStats> result = new HashMap<String, WebStats>();
 		
-		List<String> rowPrefixList = new ArrayList<String>();
-		if(sysType == SysEnvType.SCREEN.getValue()){
-			if(visitorType == null){
-				rowPrefixList.add(WebSiteSummableKpi.SysScreenRowGenerator.generateRowPrefix(time, String.valueOf(webId)));
-			} else {
-				rowPrefixList.add(WebSiteSummableKpi.SysScreenRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType));
-			}
+		String rowPrefix;
+		if(visitorType == null){
+			rowPrefix = SysEnvRowGenerator.generateRowPrefix(time, String.valueOf(webId));
 		} else {
-			if(visitorType == null){
-				rowPrefixList.add(WebSiteSummableKpi.SysBasicRowGenerator.generateRowPrefix(time, String.valueOf(webId)));
-			} else {
-				rowPrefixList.add(WebSiteSummableKpi.SysBasicRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType));
-			}
+			rowPrefix = SysEnvRowGenerator.generateRowPrefix(time, String.valueOf(webId), visitorType);
 		}
+		
 		int fieldIndex = 0;
 		if(sysType == SysEnvType.SCREEN.getValue()) 
-			fieldIndex = WebSiteSummableKpi.SysScreenRowGenerator.SCREEN_INDEX;
+			fieldIndex = SysEnvRowGenerator.SCREEN_INDEX;
 		else if(sysType == SysEnvType.BROWSER.getValue()) 
-			fieldIndex = WebSiteSummableKpi.SysBasicRowGenerator.BROWSER_INDEX;
+			fieldIndex = SysEnvRowGenerator.BROWSER_INDEX;
 		else if(sysType == SysEnvType.COLOR_DEPTH.getValue()) 
-			fieldIndex = WebSiteSummableKpi.SysBasicRowGenerator.COLOR_DEPTH_INDEX;
+			fieldIndex = SysEnvRowGenerator.COLOR_DEPTH_INDEX;
 		else if(sysType == SysEnvType.COOKIE_ENABLED.getValue()) 
-			fieldIndex = WebSiteSummableKpi.SysBasicRowGenerator.IS_ENABLE_COOKIE_INDEX;
+			fieldIndex = SysEnvRowGenerator.IS_ENABLE_COOKIE_INDEX;
 		else if(sysType == SysEnvType.LANGUAGE.getValue()) 
-			fieldIndex = WebSiteSummableKpi.SysBasicRowGenerator.LANGUAGE_INDEX;
+			fieldIndex = SysEnvRowGenerator.LANGUAGE_INDEX;
 		else if(sysType == SysEnvType.OS.getValue()) 
-			fieldIndex = WebSiteSummableKpi.SysBasicRowGenerator.OS_INDEX;
+			fieldIndex = SysEnvRowGenerator.OS_INDEX;
 
-		Map<String, WebSiteSummableKpi> kpiResultMap = summableKpiDao.getWebSiteTopKpi(rowPrefixList, fieldIndex, topNum);
+		Map<String, WebSiteSummableKpi> kpiResultMap = summableKpiDao.getWebSiteTopKpi(Lists.newArrayList(rowPrefix), fieldIndex, topNum);
 		Map<String, Long> ipMap = unSummableKpiDao.getWebSiteUnSummableKpi(UnSummableKpiParam.KPI_IP, time, String.valueOf(webId), UnSummableKpiParam.SIGN_WEB_SYS + RowUtil.FIELD_SPLIT + sysType, visitorType, new ArrayList<String>(kpiResultMap.keySet()));
 		Map<String, Long> uvMap = unSummableKpiDao.getWebSiteUnSummableKpi(UnSummableKpiParam.KPI_UV, time, String.valueOf(webId), UnSummableKpiParam.SIGN_WEB_SYS + RowUtil.FIELD_SPLIT + sysType, visitorType, new ArrayList<String>(kpiResultMap.keySet()));
 

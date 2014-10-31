@@ -21,8 +21,10 @@ import com.tracker.storm.drpc.AggregateReturnBolt;
 import com.tracker.storm.drpc.SearchRealTimeStatistic;
 import com.tracker.storm.drpc.TransportBolt;
 import com.tracker.storm.drpc.drpcprocess.RTIpProcess;
+import com.tracker.storm.drpc.drpcprocess.RTRecordProcess;
 import com.tracker.storm.drpc.drpcprocess.RTUserProcess;
 import com.tracker.storm.drpc.drpcprocess.RTVisitorProcess;
+import com.tracker.storm.drpc.groupstream.LinePartitionGroup;
 import com.tracker.storm.drpc.groupstream.PartitionGroup;
 /**
  * 
@@ -66,10 +68,12 @@ public class DrpcServerTopology {
 		 * 的每个excute上.
 		 */
 		TransportBolt tsb = new TransportBolt(SearchRealTimeStatistic.getCompentId());
-		PartitionGroup partitionGroup = new PartitionGroup();
+//		PartitionGroup partitionGroup = new PartitionGroup();
+		LinePartitionGroup  partitionGroup = new LinePartitionGroup();
 		tsb.addTransport(RTVisitorReq.RTVISITOR_FUNC,partitionGroup);
 		tsb.addTransport(RTVisitorReq.RTUSER_FUNC,partitionGroup);
 		tsb.addTransport(RTVisitorReq.RTIP_FUNC,partitionGroup);
+		tsb.addTransport(RTVisitorReq.RTRECORD_FUNC, partitionGroup);
 		builder.setBolt("transportBolt",tsb,1).shuffleGrouping("drpcspout");
 		
 		/**
@@ -81,10 +85,12 @@ public class DrpcServerTopology {
 		Object inputArgs[] = {"cookie_index",zookeeper}; //arg1:working table arg2:zookeeper location
 		Object userArgs[] = {"user_index",zookeeper};
 		Object ipArgs[] = {"ip_index",zookeeper};
+		Object recordArgs[] = {"log_website_regions",zookeeper};
 		//RTVisitorProcess: real time visitor request server
 		srts.addProcessItem(RTVisitorReq.RTVISITOR_FUNC,RTVisitorProcess.class,inputArgs);
 		srts.addProcessItem(RTVisitorReq.RTUSER_FUNC,RTUserProcess.class,userArgs);
 		srts.addProcessItem(RTVisitorReq.RTIP_FUNC,RTIpProcess.class,ipArgs);
+		srts.addProcessItem(RTVisitorReq.RTRECORD_FUNC,RTRecordProcess.class,recordArgs);
 		
 		BoltDeclarer bdeclare = builder.setBolt(SearchRealTimeStatistic.getCompentId(),srts, 9);
 		bdeclare.directGrouping(TransportBolt.getCompentId(), TransportBolt.getStreamId());
@@ -104,8 +110,7 @@ public class DrpcServerTopology {
 
 		// Topology run
 		if (args.length != 0 && args[0].equals("local")) {
-			conf.setDebug(true);
-
+//			conf.setDebug(true);
 			LocalCluster localCluster = new LocalCluster();
 			localCluster.submitTopology("DrpcServer", conf, builder.createTopology());
 			/*--------------------------------------------------------------------------------------------
@@ -123,13 +128,16 @@ public class DrpcServerTopology {
 					if(func.contains(RTVisitorProcess.ProcessFunc)){
 						//topsearchvalue:webid##engine:searchtype:startindex:endindex
 						//topsearchvalue-1FoxEngine-1-posText-0-9
-						String list[] = func.split(StringUtil.KEY_VALUE_SPLIT);
 //						RequestUtil.RTVisitorReq.getCookieReq(webId, userFilter.getCookieId(), 
 //							userFilter.getUserType(), startIndex, count, date)
 						System.out.println(drpc.execute(RequestUtil.DRPC_NAME, RequestUtil.
-								RTVisitorReq.getCookieReq("1",0,null,0,1, 100, StringUtil.getCurrentDay())));
-					}else
-						System.out.println(drpc.execute("statistic", func));
+								RTVisitorReq.getCookieReq("1",0,null,0,1, 10, "2014-10-29")));
+					}else if(func.contains(RTRecordProcess.ProcessFunc)){
+						System.out.println(drpc.execute(RequestUtil.DRPC_NAME, 
+								RequestUtil.RTVisitorReq.getRecordReq("1", 0,1, 10, "2014-10-29")));
+					}else{
+						System.out.println(drpc.execute(RequestUtil.DRPC_NAME, func));
+					}
 				}
 			} catch (IOException e) {
 				// TODO Auto-generated catch block

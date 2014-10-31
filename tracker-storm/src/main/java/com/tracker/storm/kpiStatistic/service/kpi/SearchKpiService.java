@@ -17,6 +17,7 @@ import com.tracker.db.dao.kpi.entity.UnSummableKpiParam;
 import com.tracker.db.dao.kpi.entity.UnSummableKpiParam.SearchRowGenerator;
 import com.tracker.db.dao.kpi.model.SearchSummableKpi;
 import com.tracker.db.dao.kpi.model.SearchSummableKpi.ConditionRowGenerator;
+import com.tracker.db.dao.kpi.model.SearchSummableKpi.PageNumResultGenerator;
 import com.tracker.db.dao.kpi.model.SearchSummableKpi.ResultRowGenerator;
 import com.tracker.storm.common.StormConfig;
 import com.tracker.storm.data.DataService;
@@ -62,7 +63,7 @@ public class SearchKpiService {
 			setKpiForSearchCondition(kpiMap, date, webId, seId, searchType, log.getSearchShowType(), log.getSearchConditionJson());
 		}
 		//for 页码
-		setKpiForPageNum(kpiMap, date, webId, seId, searchType, searchPageShowType, curPageNum);
+		setKpiForPageNum(kpiMap, date, webId, seId, searchType, curPageNum);
 		
 		SummableKpiEntity kpiEntity = new SummableKpiEntity();
 		for(String key: kpiMap.keySet()){
@@ -104,19 +105,14 @@ public class SearchKpiService {
 		if(responseTime != null)
 			pvAndCostKpi.setTotalCost((long)responseTime);
 		
-		//for result:search cost
-		if(costType != null){
-			String resultCostRow = ResultRowGenerator.generateRowKey(date, webId, seId, searchType, SearchResultType.SEARCH_COST.getType(), searchPageShowType, costType.getType());
-			kpiMap.put(resultCostRow, pvAndCostKpi);
-		}
-		// for result: count
-		if(resultCountType != null){
-			String resultCountRow = ResultRowGenerator.generateRowKey(date, webId, seId, searchType, SearchResultType.SEARCH_RESULT_COUNT.getType(), searchPageShowType, resultCountType.getType());
-			kpiMap.put(resultCountRow, pvAndCostKpi);
-		}
-		// for result: time
-		String resultTimeRow = ResultRowGenerator.generateRowKey(date, webId, seId, searchType, SearchResultType.SEARCH_TIME.getType(), searchPageShowType, hour);
-		kpiMap.put(resultTimeRow, pvAndCostKpi);
+		if(costType == null)
+			costType = SearchCostType.FIVE_HUN_MILLS;
+		
+		if(resultCountType == null)
+			resultCountType = SearchResultCountType.ZERO;
+		
+		String resultRow = ResultRowGenerator.generateRowKey(date, webId, seId, searchType, costType.getType(), resultCountType.getType(), hour, searchPageShowType);
+		kpiMap.put(resultRow, pvAndCostKpi);
 	}
 	
 	//for search condition
@@ -147,14 +143,14 @@ public class SearchKpiService {
 	}
 	
 	//for pageNum
-	private void setKpiForPageNum(Map<String, SearchSummableKpi> kpiMap, String date, String webId, Integer seId, Integer searchType, String searchPageShowType, Integer curPageNum){
+	private void setKpiForPageNum(Map<String, SearchSummableKpi> kpiMap, String date, String webId, Integer seId, Integer searchType, Integer curPageNum){
 		if(curPageNum == null)
 			return;
 		SearchPageNumType pageNumType = SearchPageNumType.getType(curPageNum);
 		if(pageNumType != null){
 			SearchSummableKpi pvKpi = new SearchSummableKpi();
 			pvKpi.setPv(1L);
-			String pageNumRow = ResultRowGenerator.generateRowKey(date, webId, seId, searchType, SearchResultType.DISPLAY_PAGE_NUM.getType(), searchPageShowType, pageNumType.getType());
+			String pageNumRow = PageNumResultGenerator.generateRowKey(date, webId, seId, searchType, SearchResultType.DISPLAY_PAGE_NUM.getType(), pageNumType.getType());
 			kpiMap.put(pageNumRow, pvKpi);
 		}
 	}

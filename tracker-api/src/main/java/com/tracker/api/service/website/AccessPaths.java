@@ -14,8 +14,12 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.thrift7.TException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import backtype.storm.generated.DRPCExecutionException;
+import backtype.storm.utils.DRPCClient;
 
 import com.tracker.api.service.data.WebSiteDataService;
 import com.tracker.api.thrift.web.LogFilter;
@@ -24,6 +28,7 @@ import com.tracker.common.log.ApacheSearchLog;
 import com.tracker.common.log.UserVisitLogFields;
 import com.tracker.common.log.UserVisitLogFields.FIELDS;
 import com.tracker.common.utils.ConfigExt;
+import com.tracker.common.utils.RequestUtil;
 import com.tracker.common.utils.StringUtil;
 import com.tracker.common.utils.TableRowKeyCompUtil;
 import com.tracker.db.dao.webstats.model.WebSiteBaseTableAccess;
@@ -44,15 +49,31 @@ public class AccessPaths {
 	private List<HbaseCRUD> m_tableList;
 	private HbaseCRUD m_baseTable;
 	private WebSiteDataService m_dataService;
+	private List<DRPCClient> m_drpcClients;
+	private Properties 		m_properties ;
+	private Integer _drpcServers;
+	private Integer _point;
 	
 	private static enum FUNC_TYPE{
 		user_index,cookie_index,ip_index
 	}
 
-	public AccessPaths(String zookeeper) {
+	public AccessPaths(Properties properties) {
+		m_properties = properties;
+		String zookeeper = m_properties.getProperty("hbase.zookeeper.quorum");
+		String drpcHost = m_properties.getProperty("storm.drpc.server");
+		String hosts[] = drpcHost.split(",");
+		Integer drpcPort  = Integer.parseInt(m_properties.getProperty("storm.drpc.port"));
+		m_drpcClients = new ArrayList<DRPCClient>();
+		_drpcServers = 0;
+		for(int j = 0 ;j<hosts.length ;j++){
+			m_drpcClients.add(new DRPCClient(hosts[j], drpcPort));
+			_drpcServers++;
+		}
 		m_dataService = new WebSiteDataService();
-		m_baseTable = new HbaseCRUD("log_website",zookeeper);
+		m_baseTable = new HbaseCRUD("log_website_regions",zookeeper);
 		m_tableList = new ArrayList<HbaseCRUD>(FUNC_TYPE.values().length);
+		_point = 0;
 		for(FUNC_TYPE index : FUNC_TYPE.values()){
 			HbaseCRUD tmp = new HbaseCRUD(index.toString(), zookeeper);
 			m_tableList.add(index.ordinal(), tmp);
@@ -261,7 +282,7 @@ public class AccessPaths {
 	 */
 	private PathResult getUserAccessPaths(String webId, int startIndex,int count, int visitType,String date,
 			UserFilter userFilter,FUNC_TYPE switchType){
-		if(--startIndex < 0 || count < 0){
+		if(startIndex < 0 || count < 0){
 			return null;
 		}
 		HbaseCRUD table = m_tableList.get(switchType.ordinal());
@@ -270,7 +291,7 @@ public class AccessPaths {
 		List<String> others = new ArrayList<String>();
 		HbaseParam param = new HbaseParam();
 		HbaseResult result = new HbaseResult();
-		Integer startPos = startIndex;
+		Integer startPos = startIndex - 1;
 		Integer endPos = startIndex + count;
 		//switch to different fields
 		switch(switchType){
@@ -297,7 +318,7 @@ public class AccessPaths {
 		}
 		if(scan_baseTabel){
 			//get data from base table
-			return getBaseTable(startPos, endPos,userFilter,date);
+			return getBaseTable(webId,startIndex,count,userFilter,date);
 		}
 		List<Get> gets = new ArrayList<Get>();
 		if(userFilter.getUserType() > 0){
@@ -366,6 +387,56 @@ public class AccessPaths {
 		retVal.setCount(totalCount);
 		return retVal;
 	}
+//	/**
+//	 * 
+//	 * 函数名：getBaseTable
+//	 * 功能描述：从基础表中取第startIndex开始,endIndex结束的数据
+//	 * @param startIndex
+//	 * @param endIndex
+//	 * @param userFilter
+//	 * @param date
+//	 * @return
+//	 */
+//	private PathResult getBaseTable(String webId,Integer startIndex,Integer endIndex,UserFilter userFilter,String date){
+//		Long totalCount = 0L;
+//		HbaseParam param = new HbaseParam();
+//		HbaseResult result = new HbaseResult();
+//		//add return fields
+//		List<String> inputList = UserVisitLogFields.castToList(PathItem.fields);
+//		param.setColumns(inputList);
+//		//add userType filter
+//		if(userFilter.getUserType() > 0){
+//			Integer userType = userFilter.getUserType();
+//			SingleColumnValueFilter scvf = new SingleColumnValueFilter("infomation".getBytes(),
+//					FIELDS.userType.toString().getBytes(), CompareOp.EQUAL, Bytes.toBytes(userType));
+//			param.addFilter(scvf);
+//		}
+//		if(date != null ){
+//			String startDate = date + " 00:00:00";
+//			String endDate = date + " 24:00:00";
+//			param.setTimeRange(StringUtil.parseTimeToLong(startDate),
+//					StringUtil.parseTimeToLong(endDate));
+//		}
+//		String nextRow = m_baseTable.readFrom(param, result,null);
+//		totalCount += result.size();
+////		FirstKeyOnlyFilter fkof = new FirstKeyOnlyFilter();
+////		while(totalCount < startIndex && nextRow != null){
+////			
+////			param.addFilter(fkof);
+////		}
+//		while(totalCount < endIndex && nextRow != null){
+//			HbaseResult tmp = new HbaseResult();
+//			nextRow = m_baseTable.readFrom(param, tmp, nextRow);
+//			totalCount += tmp.size();
+//			result.addList(tmp.list());
+//		}
+//		PathResult retVal = new PathResult();
+//		List<PathItem> listPi = getValueList(startIndex,endIndex,result);
+//		retVal.setList(listPi);
+//		retVal.setCount(-1L);
+//		return retVal;
+//	}
+	
 	/**
 	 * 
 	 * 函数名：getBaseTable
@@ -376,42 +447,46 @@ public class AccessPaths {
 	 * @param date
 	 * @return
 	 */
-	private PathResult getBaseTable(Integer startIndex,Integer endIndex,UserFilter userFilter,String date){
+	private PathResult getBaseTable(String webId,int startIndex,int count,UserFilter userFilter,String date){
 		Long totalCount = 0L;
 		HbaseParam param = new HbaseParam();
 		HbaseResult result = new HbaseResult();
-		//add return fields
-		List<String> inputList = UserVisitLogFields.castToList(PathItem.fields);
-		param.setColumns(inputList);
-		//add userType filter
-		if(userFilter.getUserType() > 0){
-			Integer userType = userFilter.getUserType();
-			SingleColumnValueFilter scvf = new SingleColumnValueFilter("infomation".getBytes(),
-					FIELDS.userType.toString().getBytes(), CompareOp.EQUAL, Bytes.toBytes(userType));
-			param.addFilter(scvf);
-		}
-		if(date != null ){
-			String startDate = date + " 00:00:00";
-			String endDate = date + " 24:00:00";
-			param.setTimeRange(StringUtil.parseTimeToLong(startDate),
-					StringUtil.parseTimeToLong(endDate));
-		}
-		String nextRow = m_baseTable.readFrom(param, result,null);
-		totalCount += result.size();
-//		FirstKeyOnlyFilter fkof = new FirstKeyOnlyFilter();
-//		while(totalCount < startIndex && nextRow != null){
-//			
-//			param.addFilter(fkof);
-//		}
-		while(totalCount < endIndex && nextRow != null){
-			HbaseResult tmp = new HbaseResult();
-			nextRow = m_baseTable.readFrom(param, tmp, nextRow);
-			totalCount += tmp.size();
-			result.addList(tmp.list());
+		List<PathItem> listItem = new ArrayList<AccessPaths.PathItem>();
+		int readCount = 0;
+		String requestStr = RequestUtil.RTVisitorReq.getRecordReq(webId,userFilter.getUserType(),
+				startIndex, count, date);
+		try {
+			String drpcRet = m_drpcClients.get(_point++%_drpcServers).execute(RequestUtil.DRPC_NAME, requestStr);
+			if(drpcRet == null || drpcRet.equals("")){
+				return null;
+			}
+			String splits[] = drpcRet.split(StringUtil.RETURN_ITEM_SPLIT);
+			List<Get> gets = new ArrayList<Get>();
+			for(int i = startIndex;i< splits.length; i++){
+				gets.add(new Get(splits[i].getBytes()));
+			}
+			param.setReadList(gets);
+			m_baseTable.batchRead(param, result);
+			do{
+				PathItem pi = new PathItem();
+				List<Object> values = WebSiteBaseTableAccess.getBaseTableItem(result, PathItem.fields);
+				if(values.size() > 0){
+					for(int i = 0;i < PathItem.fields.length;i++){
+						FIELDS field = PathItem.fields[i];
+						pi.setField(field,values.get(i));
+					}
+					listItem.add(pi);
+				}
+			}while(WebSiteBaseTableAccess.moveNext(result) &&++readCount < count);
+		} catch (TException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (DRPCExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 		PathResult retVal = new PathResult();
-		List<PathItem> listPi = getValueList(startIndex,endIndex,result);
-		retVal.setList(listPi);
+		retVal.setList(listItem);
 		retVal.setCount(-1L);
 		return retVal;
 	}
@@ -598,8 +673,7 @@ public class AccessPaths {
 		String configFile = java.lang.System.getenv("COMMON_CONFIG");
 		Properties properties = ConfigExt.getProperties(hdfsLocation,
 				configFile);
-		AccessPaths uap = new AccessPaths(
-				properties.getProperty("hbase.zookeeper.quorum"));
+		AccessPaths uap = new AccessPaths(properties);
 		UserFilter userFilter = new UserFilter();
 		LogFilter logFilter = new LogFilter();
 //		logFilter.setIsCallSELog(1);
@@ -617,7 +691,7 @@ public class AccessPaths {
 			while(System.in.read() >= 0){
 //				PathResult result = uap.getUserAccessPaths("1",1, 100,2,StringUtil.getCurrentDay(),userFilter,FUNC_TYPE.cookie_index);
 //				PathResult result = uap.filterSE("1",1, 10,3,StringUtil.getCurrentDay(),userFilter,FUNC_TYPE.cookie_index);
-				PathResult result = uap.getPathsByCookie("1",1, 100,logFilter,StringUtil.getCurrentDay(),userFilter);
+				PathResult result = uap.getPathsByCookie("1",1, 10,logFilter,"2014-10-28",userFilter);
 				pos +=10;
 				if(result == null)
 					break;

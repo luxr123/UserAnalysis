@@ -8,7 +8,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Pattern;
 
+import org.apache.commons.io.filefilter.RegexFileFilter;
+import org.apache.hadoop.hbase.filter.CompareFilter.CompareOp;
+import org.apache.hadoop.hbase.filter.RegexStringComparator;
+import org.apache.hadoop.hbase.filter.RowFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,12 +77,10 @@ public class RTVisitorProcess extends HBaseProcess {
 		String userType = (String)request.get(FIELDS.userType.toString());
 		String webId = (String)request.get(FIELDS.webId.toString());
 		String key = getKey(request);
-
 		//get time range
 		String date = (String) request.get(RequestUtil.DATETIME);
 		Long startTime  = parseTimeToLong(date + " 00:00:00");
 		Long endTime = parseTimeToLong(date + " 24:00:00");
-
 		int pos = 0;
 		List<ValueItem_hext> buf = new ArrayList<ValueItem_hext>();
 		if(key != null && !key.equals("")){
@@ -99,13 +102,27 @@ public class RTVisitorProcess extends HBaseProcess {
 			}
 		}else{
 			//scan partitions
+//			String partitions = "";
+//			List<String> startRowKey = new ArrayList<String>();
+//			int length = 0;
 			while(request.containsKey(RequestUtil.PARTITION + pos)){
 				//scan for one partition
 				String partition = (String)request.get(RequestUtil.PARTITION + pos++);
-				String startRowKey = request.get(FIELDS.webId.toString()) + StringUtil.ARUGEMENT_SPLIT + partition ;
-				List<ValueItem_hext> tmp = getValueList(startTime, endTime, startRowKey, userType,visitType);
+//				length = partition.length();
+				String startRowKey = request.get(FIELDS.webId.toString()) + StringUtil.ARUGEMENT_SPLIT + partition;
+//				 startRowKey.add(request.get(FIELDS.webId.toString()) + StringUtil.ARUGEMENT_SPLIT + partition);
+				List<ValueItem_hext> tmp = getValueList(startTime, endTime, startRowKey, userType,visitType,endIndex);
 				buf.addAll(tmp);
+//				partitions += partition;
 			}
+			//usring regex for search
+//			Collections.sort(startRowKey);
+//			String pattern = "^" + request.get(FIELDS.webId.toString()) + StringUtil.ARUGEMENT_SPLIT 
+//					+ "[" +partitions + "]" + "{" + length + "}" + StringUtil.ARUGEMENT_SPLIT ;
+//			List<ValueItem_hext> tmp = getValueList_Regex(startTime, endTime, startRowKey.get(0)
+//					,startRowKey.get(startRowKey.size() - 1) ,pattern, userType,visitType);
+//			buf.addAll(tmp);
+
 		}
 		//sort the result
 		try{
@@ -142,7 +159,11 @@ public class RTVisitorProcess extends HBaseProcess {
 				position++;
 			}
 		}
-		RTVisitorResult retVal = new RTVisitorResult(retList, keySet.size());
+		RTVisitorResult retVal = null;
+		if(key != null && !key.equals(""))
+			retVal = new RTVisitorResult(retList, keySet.size());
+		else
+			retVal = new RTVisitorResult(retList, -1);
 		return retVal;
 	}
 	
@@ -152,13 +173,14 @@ public class RTVisitorProcess extends HBaseProcess {
 //			return keys.get(1);
 //		else
 //			return   userId;
-		return keys.get(1);
+		return keys.get(3);
 	}
 	
 	
 	protected String getKey(Map<String,Object> request){
 		return (String)request.get(RequestUtil.ARGUMENT + 0);
 	}
+	
 	/**
 	 * 
 	 * 函数名：getValueList
@@ -171,7 +193,7 @@ public class RTVisitorProcess extends HBaseProcess {
 	 * @return
 	 */
 	protected List<ValueItem_hext> getValueList(Long startTime,Long endTime,String startRowKey
-			,String userType,Integer visitType){
+			,String userType,Integer visitType,Integer endIndex){
 		List<ValueItem_hext> retVal = new ArrayList<SearchValueResult.ValueItem_hext>();
 		HbaseParam param = new HbaseParam();
 		HbaseResult hresult = new HbaseResult();
@@ -182,14 +204,74 @@ public class RTVisitorProcess extends HBaseProcess {
 			startRowKey += StringUtil.ARUGEMENT_SPLIT + userType;
 		}
 		String endRowKey = startRowKey + ".";
+		startRowKey += StringUtil.ARUGEMENT_SPLIT;
 		if(startTime != null && endTime != null)
 			param.setTimeRange(startTime, endTime);
 		do{
+			String rowKey  = null;
+			Long timeStamp = null;
+			Long count = null;
+			m_crud.setReturnSize(endIndex);
 			nextKey = m_crud.readRange(param, hresult, startRowKey, endRowKey);
 			do{
-				String rowKey = WebSiteFieldIndexAccess.getFieldsIndex_RecordByVisitType(hresult,visitType);
-				Long timeStamp = WebSiteFieldIndexAccess.getFieldsIndexTimeStamp(hresult,visitType);
-				Long count = WebSiteFieldIndexAccess.getFieldsIndexCount(hresult);
+				rowKey = WebSiteFieldIndexAccess.getFieldsIndex_RecordByVisitType(hresult,visitType);
+				if(rowKey == null)
+					continue;
+				timeStamp = WebSiteFieldIndexAccess.getFieldsIndexTimeStamp(hresult,visitType);
+				if(timeStamp == null)
+					continue;
+				count = WebSiteFieldIndexAccess.getFieldsIndexCount(hresult);
+				retVal.add(new ValueItem_hext(rowKey, timeStamp,count));
+				if(retVal.size() >= endIndex)
+					return retVal;
+			}while(WebSiteFieldIndexAccess.moveNext(hresult));
+			startRowKey = nextKey;
+		}while(nextKey != null);
+		return retVal;
+	}
+	
+	/**
+	 * 
+	 * 函数名：getValueList_Regex
+	 * 功能描述：返回索引表中每条记录的最近值
+	 * @param startTime 扫描数据的时间戳起始时间
+	 * @param endTime   扫描数据的时间戳结束时间
+	 * @param startRowKey 扫描数据的起始行健
+	 * @param visitType 用于扫描时过滤的访问类型值
+	 * @return 返回ValueItem_hext列表.每条记录由基础表的行健与时间戳,访问数量构成
+	 * @return
+	 */
+	protected List<ValueItem_hext> getValueList_Regex(Long startTime,Long endTime,String startRowKey,
+			String endRowKey,String pattern,String userType,Integer visitType){
+		List<ValueItem_hext> retVal = new ArrayList<SearchValueResult.ValueItem_hext>();
+		HbaseParam param = new HbaseParam();
+		HbaseResult hresult = new HbaseResult();
+		String nextKey = null;
+		//filter user Type: add userType on rowkey
+		if(userType != null && !userType.equals("") && !userType.equals("0")){
+			startRowKey += StringUtil.ARUGEMENT_SPLIT + userType;
+			endRowKey += StringUtil.ARUGEMENT_SPLIT + userType;
+			pattern += StringUtil.ARUGEMENT_SPLIT + userType;
+		}
+		startRowKey += StringUtil.ARUGEMENT_SPLIT;
+		endRowKey += ".";
+		pattern += ".*";
+		param.addFilter(new RowFilter(CompareOp.EQUAL, new RegexStringComparator(pattern,Pattern.MULTILINE)));
+		if(startTime != null && endTime != null)
+			param.setTimeRange(startTime, endTime);
+		do{
+			String rowKey = null;
+			Long timeStamp = null;
+			Long count = null;
+			nextKey = m_crud.readRange(param, hresult, startRowKey, endRowKey);
+			do{
+				rowKey = WebSiteFieldIndexAccess.getFieldsIndex_RecordByVisitType(hresult,visitType);
+				if(rowKey == null)
+					continue;
+				timeStamp = WebSiteFieldIndexAccess.getFieldsIndexTimeStamp(hresult,visitType);
+				if(timeStamp == null)
+					continue;
+				count = WebSiteFieldIndexAccess.getFieldsIndexCount(hresult);
 				if(rowKey != null && timeStamp != null)
 					retVal.add(new ValueItem_hext(rowKey, timeStamp,count));
 			}while(WebSiteFieldIndexAccess.moveNext(hresult));

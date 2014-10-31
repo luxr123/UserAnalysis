@@ -1,0 +1,11 @@
+echo $UPSTART_SESSION
+if [ $# != 1 ]
+then
+	echo -e "input operation"
+	exit
+fi
+for i in 1 2
+do
+	ssh hadoop@dev-hadoop$i monit $1 zookeeper
+done
+	ssh hadoop@dev-Spynet-67 monit $1 zookeeper

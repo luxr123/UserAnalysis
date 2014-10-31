@@ -6,37 +6,57 @@ import com.tracker.db.simplehbase.annotation.HBaseColumn;
 import com.tracker.db.simplehbase.annotation.HBaseTable;
 import com.tracker.db.util.RowUtil;
 
+/**
+ * 
+ * 文件名：PageSummableKpi
+ * 创建人：jason.hua
+ * 创建日期：2014-10-27 下午12:38:35
+ * 功能描述：基于页面的可累加kpi
+ *
+ */
 @HBaseTable(tableName = "rt_kpi_summable", defaultFamily = "data")
 public class PageSummableKpi implements Serializable{
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * 文件名：Columns
+	 * 创建人：jason.hua
+	 * 创建日期：2014-10-27 下午12:41:18
+	 * 功能描述：存储在hbase中的各个列名
+	 *
+	 */
 	public static enum Columns{
 		pv, entryPageCount, nextPageCount, outPageCount, stayTime
 	}
+	
+	/**
+	 * 标识值
+	 */
 	public static final String SIGN = "Page";
 	
+	/**
+	 * row中各个字段的index值
+	 */
 	public static final int SIGN_INDEX = 0;
 	public static final int DATE_INDEX = 1;
 	public static final int WEB_ID_INDEX = 2;
 	public static final int VISITOR_TYPE_INDEX = 3;
 	public static final int PAGE_SIGN_INDEX = 4;
 
-	//公用指标
 	@HBaseColumn(qualifier = "pv", isIncrementType = true)
-	private Long pv;
+	private Long pv; //浏览量
 	
-	//受访页指标
 	@HBaseColumn(qualifier = "entryPageCount", isIncrementType = true)
-	private Long entryPageCount;
+	private Long entryPageCount; //入口页次数
 	
 	@HBaseColumn(qualifier = "nextPageCount", isIncrementType = true)
-	private Long nextPageCount;
+	private Long nextPageCount; //贡献下游页面数
 
 	@HBaseColumn(qualifier = "outPageCount", isIncrementType = true)
-	private Long outPageCount;
+	private Long outPageCount; // 退出页次数
 	
 	@HBaseColumn(qualifier = "stayTime", isIncrementType = true)
-	private Long stayTime;
+	private Long stayTime; //总停留时间
 	
 
 	public static String generateRowKey(String date, String webId, Integer visitorType, String pageSign){

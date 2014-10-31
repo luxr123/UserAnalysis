@@ -8,31 +8,23 @@ import com.tracker.common.utils.NumericUtil;
 import com.tracker.db.dao.kpi.model.PageSummableKpi;
 import com.tracker.db.dao.kpi.model.SearchSummableKpi;
 import com.tracker.db.dao.kpi.model.WebSiteSummableKpi;
-import com.tracker.db.util.RowUtil;
 
 public class SummableKpiEntity implements Serializable{
-	private static final long serialVersionUID = 8015707179268459162L;
-	private Map<String, Map<String, WebSiteSummableKpi>> webSiteKpiMap = null;
-	private Map<String, Map<String, PageSummableKpi>> pageKpiMap = null;
-	private Map<String, Map<String, SearchSummableKpi>> searchKpiMap = null;
+	private static final long serialVersionUID = 1L;
+	private Map<String, WebSiteSummableKpi> webSiteKpiMap = null;
+	private Map<String, PageSummableKpi> pageKpiMap = null;
+	private Map<String, SearchSummableKpi> searchKpiMap = null;
 
 	public void addWebSiteKpi(String key, WebSiteSummableKpi kpi){
 		if(webSiteKpiMap == null)
-			webSiteKpiMap = new HashMap<String, Map<String, WebSiteSummableKpi>>();
+			webSiteKpiMap = new HashMap<String, WebSiteSummableKpi>();
 		
-		String sign = RowUtil.getRowField(key, WebSiteSummableKpi.SIGN_INDEX);
-		if(sign == null)
-			return;
-		Map<String, WebSiteSummableKpi> kpiMap = webSiteKpiMap.get(sign);
-		if(kpiMap == null){
-			kpiMap = new HashMap<String, WebSiteSummableKpi>();
-			webSiteKpiMap.put(sign, kpiMap);
-		}
-		
-		WebSiteSummableKpi kpiResult = kpiMap.get(key);
-		if(kpiResult == null){
+		WebSiteSummableKpi kpiResult = null;
+		if(webSiteKpiMap.containsKey(key)){
+			kpiResult = webSiteKpiMap.get(key);
+		} else {
 			kpiResult = new WebSiteSummableKpi();
-			kpiMap.put(key, kpiResult);
+			webSiteKpiMap.put(key, kpiResult);
 		}
 		kpiResult.setPv(NumericUtil.addValue(kpiResult.getPv(), kpi.getPv()));
 		kpiResult.setVisitTimes(NumericUtil.addValue(kpiResult.getVisitTimes(), kpi.getVisitTimes()));
@@ -43,21 +35,14 @@ public class SummableKpiEntity implements Serializable{
 
 	public void addPageKpi(String key, PageSummableKpi kpi){
 		if(pageKpiMap == null)
-			pageKpiMap = new HashMap<String, Map<String, PageSummableKpi>>();
+			pageKpiMap = new HashMap<String, PageSummableKpi>();
 		
-		String sign = RowUtil.getRowField(key, PageSummableKpi.SIGN_INDEX);
-		if(sign == null)
-			return;
-		Map<String, PageSummableKpi> kpiMap = pageKpiMap.get(sign);
-		if(kpiMap == null){
-			kpiMap = new HashMap<String, PageSummableKpi>();
-			pageKpiMap.put(sign, kpiMap);
-		}
-		
-		PageSummableKpi kpiResult = kpiMap.get(key);
-		if(kpiResult == null){
+		PageSummableKpi kpiResult = null;
+		if(pageKpiMap.containsKey(key)){
+			kpiResult = pageKpiMap.get(key);
+		} else {
 			kpiResult = new PageSummableKpi();
-			kpiMap.put(key, kpiResult);
+			pageKpiMap.put(key, kpiResult);
 		}
 		kpiResult.setPv(NumericUtil.addValue(kpiResult.getPv(), kpi.getPv()));
 		kpiResult.setEntryPageCount(NumericUtil.addValue(kpiResult.getEntryPageCount(), kpi.getEntryPageCount()));
@@ -68,21 +53,14 @@ public class SummableKpiEntity implements Serializable{
 	
 	public void addSearchKpi(String key, SearchSummableKpi kpi){
 		if(searchKpiMap == null)
-			searchKpiMap = new HashMap<String, Map<String, SearchSummableKpi>>();
+			searchKpiMap = new HashMap<String, SearchSummableKpi>();
 		
-		String sign = RowUtil.getRowField(key, SearchSummableKpi.SIGN_INDEX);
-		if(sign == null)
-			return;
-		Map<String, SearchSummableKpi> kpiMap = searchKpiMap.get(sign);
-		if(kpiMap == null){
-			kpiMap = new HashMap<String, SearchSummableKpi>();
-			searchKpiMap.put(sign, kpiMap);
-		}
-		
-		SearchSummableKpi kpiResult = kpiMap.get(key);
-		if(kpiResult == null){
+		SearchSummableKpi kpiResult = null;
+		if(searchKpiMap.containsKey(key)){
+			kpiResult = searchKpiMap.get(key);
+		} else {
 			kpiResult = new SearchSummableKpi();
-			kpiMap.put(key, kpiResult);
+			searchKpiMap.put(key, kpiResult);
 		}
 		kpiResult.setPv(NumericUtil.addValue(kpiResult.getPv(), kpi.getPv()));
 		kpiResult.setTotalCost(NumericUtil.addValue(kpiResult.getTotalCost(), kpi.getTotalCost()));
@@ -93,41 +71,32 @@ public class SummableKpiEntity implements Serializable{
 		if(kpiEntity == null)
 			return;
 		if(kpiEntity.getWebSiteKpiMap() != null){
-			for(String sign: kpiEntity.getWebSiteKpiMap().keySet()){
-				Map<String, WebSiteSummableKpi> kpiMap = kpiEntity.getWebSiteKpiMap().get(sign);
-				for(String key: kpiMap.keySet()){
-					this.addWebSiteKpi(key, kpiMap.get(key));
-				}
+			for(String key: kpiEntity.getWebSiteKpiMap().keySet()){
+				this.addWebSiteKpi(key, kpiEntity.getWebSiteKpiMap().get(key));
 			}
 		}
 		
 		if(kpiEntity.getPageKpiMap() != null){
-			for(String sign: kpiEntity.getPageKpiMap().keySet()){
-				Map<String, PageSummableKpi> kpiMap = kpiEntity.getPageKpiMap().get(sign);
-				for(String key: kpiMap.keySet()){
-					this.addPageKpi(key, kpiMap.get(key));
-				}
+			for(String key: kpiEntity.getPageKpiMap().keySet()){
+				this.addPageKpi(key, kpiEntity.getPageKpiMap().get(key));
 			}
 		}
 		if(kpiEntity.getSearchKpiMap() != null){
-			for(String sign: kpiEntity.getSearchKpiMap().keySet()){
-				Map<String, SearchSummableKpi> kpiMap = kpiEntity.getSearchKpiMap().get(sign);
-				for(String key: kpiMap.keySet()){
-					this.addSearchKpi(key, kpiMap.get(key));
-				}
+			for(String key: kpiEntity.getSearchKpiMap().keySet()){
+				this.addSearchKpi(key, kpiEntity.getSearchKpiMap().get(key));
 			}
 		}
 	}
 	
-	public Map<String, Map<String, WebSiteSummableKpi>> getWebSiteKpiMap() {
+	public Map<String, WebSiteSummableKpi> getWebSiteKpiMap() {
 		return webSiteKpiMap;
 	}
 
-	public Map<String, Map<String, PageSummableKpi>> getPageKpiMap() {
+	public Map<String, PageSummableKpi> getPageKpiMap() {
 		return pageKpiMap;
 	}
 
-	public Map<String, Map<String, SearchSummableKpi>> getSearchKpiMap() {
+	public Map<String, SearchSummableKpi> getSearchKpiMap() {
 		return searchKpiMap;
 	}
 

@@ -1,8 +1,10 @@
 package com.tracker.db.dao.data;
 
 /**
- * 数据字典标识符
- * @author jason.hua
+ * 文件名：DataKeySign
+ * 创建人：jason.hua
+ * 创建日期：2014-10-27 下午12:00:12
+ * 功能描述：数据字典标识符
  *
  */
 public class DataKeySign {
@@ -20,5 +22,4 @@ public class DataKeySign {
 	public final static String SIGN_SEARCH_VALUE = "d_search_value";  //站内搜索字段默认值
 	public final static String SIGN_SEARCH_PAGEE = "d_search_page"; //站内搜索页
 	public final static String SIGN_SEARCH_PAGE_SHOW_TYPE = "d_search_page_show_type"; //站内搜索页展示类型
-
 }

@@ -66,7 +66,6 @@ public class AggregateReturnBolt extends ReturnResults{
 			Integer retCount = input.getIntegerByField("totalcount");
 			sets.add(input.getValue(0));
 			DrpcResult ret = null;
-			String retStr = "";
 			//all results are buffered,merge the result
 			if(sets.size() == retCount){
 				for(Object obj:sets){
@@ -81,16 +80,17 @@ public class AggregateReturnBolt extends ReturnResults{
 				}
 				Integer responseType = 0;
 				if(ret != null){
-					retStr = ret.toString();
 					responseType = ret.responseType();
-				}
-				switch(responseType){
-				case 1000: //its a magic number,just for issue
-					
-					break;//for secondary or more compute
-				default:
-					if(!input.getString(1).equals(""))	// for test, that does not contain ID,so will not response to DRPC server
-						super.execute(new TupleImpl(m_context, new Values(retStr,input.getString(1),0), input.getSourceTask(), input.getSourceStreamId()));
+					switch(responseType){
+					case 1000: //its a magic number,just for issue
+						
+						break;//for secondary or more compute
+					default:
+						if(!input.getString(1).equals(""))	// for test, that does not contain ID,so will not response to DRPC server
+							sendResult(input,ret);
+					}
+				}else{
+							sendResult(input,null);
 				}
 				//remove the cached result
 				m_resultes.remove(input.getValue(1));
@@ -98,12 +98,19 @@ public class AggregateReturnBolt extends ReturnResults{
 		}else{	
 			DrpcResult result = (DrpcResult)input.getValue(0);
 			if(null != result && result.responseType() < 10){// just request ,no need compute,return the result to DrpcServer
-				super.execute(new TupleImpl(m_context, new Values(result.toString(),input.getString(1)), input.getSourceTask(), input.getSourceStreamId()));
+				sendResult(input,result);
 			}else{//buffer the partial result
 				m_resultes.put(input.getValue(1), new ArrayList<Object>());
 				m_resultes.get(input.getValue(1)).add(input.getValue(0));
 			}
 		}
+	}
+	public void sendResult(Tuple input,DrpcResult result){
+		String retStr = "";
+		if (result != null)
+			retStr = result.toString();
+		super.execute(new TupleImpl(m_context, new Values(retStr,
+				input.getString(1),0), input.getSourceTask(), input.getSourceStreamId()));
 	}
 }
 

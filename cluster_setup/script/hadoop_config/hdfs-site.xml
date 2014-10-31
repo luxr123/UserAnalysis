@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+	<property>
+		<name>dfs.nameservices</name>
+		<value>mycluster</value>
+		<description>Comma-separated list of nameservices. Multi nameservices for HDFS Federation</description>
+	</property>
+	<property>
+		<name>dfs.ha.namenodes.mycluster</name>
+		<value>nn1,nn2</value>
+		<description>unique identifiers for each NameNode in the nameservice</description>
+	</property>
+	<property>
+		<name>dfs.namenode.rpc-address.mycluster.nn1</name>
+		<value>10.100.50.93:8020</value>
+	</property>
+	<property>
+		<name>dfs.namenode.rpc-address.mycluster.nn2</name>
+		<value>10.100.2.94:8020</value>
+	</property>
+	<property>
+		<name>dfs.namenode.http-address.mycluster.nn1</name>
+		<value>10.100.50.93:7103</value>
+	</property>
+	<property>
+		<name>dfs.namenode.http-address.mycluster.nn2</name>
+		<value>10.100.2.94:7103</value>
+	</property>
+	<property>
+		<name>dfs.namenode.shared.edits.dir</name>
+		<value>qjournal://10.100.2.92:8485;10.100.2.93:8485;10.100.2.94:8485/mycluster</value>
+	</property>
+	<property>
+		<name>dfs.client.failover.proxy.provider.mycluster</name>
+		<value>org.apache.hadoop.hdfs.server.namenode.ha.ConfiguredFailoverProxyProvider
+		</value>
+	</property>
+	<property>
+ 		 <name>dfs.ha.fencing.methods</name>
+ 		 <value>sshfence</value>
+	</property>
+	<property>
+ 		 <name>dfs.ha.fencing.ssh.private-key-files</name>
+  	  	 <value>/home/hadoop/.ssh/id_rsa</value>
+	</property>
+	<property>
+		<name>dfs.journalnode.edits.dir</name>
+		<value>/home/hadoop/secondary/journal</value>
+	</property>
+	<property>
+		<name>dfs.ha.automatic-failover.enabled</name>
+		<value>true</value>
+	</property>
+	
+	
+	<!-- Configurations for Namenode -->
+	<property>
+		<name>dfs.namenode.logging.level</name>
+		<value>info</value>
+	</property>
+	<property>
+		<name>dfs.namenode.name.dir</name>
+		<value>/home/hadoop/secondary/namenode</value>
+	</property>
+	<property>
+		<name>dfs.namenode.handler.count</name>
+		<value>10</value>
+		<description>The number of server threads for the namenode.
+		</description>
+	</property>
+	<property>
+		<name>dfs.replication</name>
+		<value>3</value>
+	</property>
+	<property>
+		<name>dfs.blocksize</name>
+		<value>256m</value>
+	</property>
+
+	<!-- Configurations for DataNode -->
+	<property>
+		<name>dfs.datanode.data.dir</name>
+		<value>/home/hadoop/datanode/secondary/datanode</value>
+	</property>
+
+</configuration>
+

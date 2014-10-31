@@ -12,7 +12,6 @@ import com.tracker.common.utils.JsonUtil;
  * 功能描述：废弃
  *
  */
-@Deprecated
 public class SearchTopResTimeResult {
 	private List<ResponseTimeRecord> list = new ArrayList<ResponseTimeRecord>();
 	private long totalCount;

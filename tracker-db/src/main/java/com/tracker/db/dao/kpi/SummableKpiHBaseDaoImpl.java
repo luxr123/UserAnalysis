@@ -87,6 +87,8 @@ public class SummableKpiHBaseDaoImpl implements SummableKpiDao{
 		Map<String, Long> pvMap = new HashMap<String, Long>();
 		for(SimpleHbaseDOWithKeyResult<WebSiteSummableKpi> rowObj: list){
 			String field = RowUtil.getRowField(rowObj.getRowKey(), fieldIndex);
+			if(field == null)
+				continue;
 			Long pv = rowObj.getT().getPv();
 			if(pv == null)
 				continue;
@@ -107,6 +109,8 @@ public class SummableKpiHBaseDaoImpl implements SummableKpiDao{
 		
 		for(SimpleHbaseDOWithKeyResult<WebSiteSummableKpi> rowObj: list){
 			String field = RowUtil.getRowField(rowObj.getRowKey(), fieldIndex);
+			if(field == null)
+				continue;
 			WebSiteSummableKpi summableKpi = rowObj.getT();
 			Long pv = rowObj.getT().getPv();
 			if(pv == null)
@@ -135,6 +139,8 @@ public class SummableKpiHBaseDaoImpl implements SummableKpiDao{
 		Map<String, WebSiteSummableKpi> resultMap = new HashMap<String, WebSiteSummableKpi>();
 		for(SimpleHbaseDOWithKeyResult<WebSiteSummableKpi> rowObj: list){
 			String field = RowUtil.getRowField(rowObj.getRowKey(), fieldIndex);
+			if(field == null)
+				continue;
 			WebSiteSummableKpi summableKpi = rowObj.getT();
 			Long pv = rowObj.getT().getPv();
 			Long visitTimes = summableKpi.getVisitTimes();
@@ -173,6 +179,8 @@ public class SummableKpiHBaseDaoImpl implements SummableKpiDao{
 		
 		for(SimpleHbaseDOWithKeyResult<PageSummableKpi> rowObj: list){
 			String field = RowUtil.getRowField(rowObj.getRowKey(), fieldIndex);
+			if(field == null)
+				continue;
 			PageSummableKpi summableKpi = rowObj.getT();
 			Long pv = summableKpi.getPv();
 			Long entryPageCount = summableKpi.getEntryPageCount();
@@ -202,6 +210,8 @@ public class SummableKpiHBaseDaoImpl implements SummableKpiDao{
 		
 		for(SimpleHbaseDOWithKeyResult<SearchSummableKpi> rowObj: list){
 			String field = RowUtil.getRowField(rowObj.getRowKey(), fieldIndex);
+			if(field == null)
+				continue;
 			SearchSummableKpi summableKpi = rowObj.getT();
 			Long pv = summableKpi.getPv();
 			Long totalCost = summableKpi.getTotalCost();

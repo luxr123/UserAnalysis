@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Scan;
@@ -55,6 +56,7 @@ public class UnSummableKpiHBaseDaoImpl implements UnSummableKpiDao{
 		List<Put> puts = new ArrayList<Put>();
 		for(String row: rowList){
 			Put put = new Put(Bytes.toBytes(row));
+			put.setDurability(Durability.ASYNC_WAL);
 			put.add(DEFAULT_CF, EMPTY_VALUE, EMPTY_VALUE);
 			puts.add(put);
 		}

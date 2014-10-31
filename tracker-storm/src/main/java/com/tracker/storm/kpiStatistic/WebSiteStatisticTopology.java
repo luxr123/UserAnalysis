@@ -9,13 +9,13 @@ import backtype.storm.tuple.Fields;
 import com.tracker.common.log.UserVisitLogFields;
 import com.tracker.storm.common.StormConfig;
 import com.tracker.storm.common.indexbolt.BaseTableIndexBolt;
-import com.tracker.storm.kpiStatistic.bolt.SaveApacheLogBolt;
-import com.tracker.storm.common.indexbolt.BaseTableIndexBolt;
 import com.tracker.storm.common.indexbolt.CookieUserFieldIndexBolt;
+import com.tracker.storm.kpiStatistic.bolt.SaveApacheLogBolt;
+import com.tracker.storm.kpiStatistic.bolt.kpi.KpiUpdateBolt;
 import com.tracker.storm.kpiStatistic.bolt.kpi.SearchTopStatsBolt;
-import com.tracker.storm.kpiStatistic.bolt.kpi.SearchTopValueBolt;
 import com.tracker.storm.kpiStatistic.bolt.kpi.SessionTimeOutBolt;
 import com.tracker.storm.kpiStatistic.bolt.kpi.SummableKpiBolt;
+import com.tracker.storm.kpiStatistic.bolt.kpi.UnSummableKpiBolt;
 import com.tracker.storm.kpiStatistic.bolt.kpi.UserSessionBolt;
 import com.tracker.storm.kpiStatistic.bolt.kpi.UserStatsBolt;
 import com.tracker.storm.kpiStatistic.spout.ApacheLogSpout;
@@ -64,23 +64,20 @@ public class WebSiteStatisticTopology {
 		
 		builder.setBolt("summableKpiBolt", new SummableKpiBolt(config), 2)
 				.setNumTasks(4)
-				.fieldsGrouping("userSessionBolt", UserSessionBolt.SUMMABLE_KPI_STREAM, new Fields(UserSessionBolt.FIELDS.kpiSign.toString()));
+				.localOrShuffleGrouping("userSessionBolt", UserSessionBolt.SUMMABLE_KPI_STREAM);
 
 		builder.setBolt("userStatsBolt", new UserStatsBolt(config), 2)
 				.setNumTasks(4)
-				.fieldsGrouping("userSessionBolt", UserSessionBolt.USER_STATS_STREAM, new Fields(UserSessionBolt.FIELDS.cookieId.toString()));
+				.localOrShuffleGrouping("userSessionBolt", UserSessionBolt.USER_STATS_STREAM);
 
-		/**
-		 * ==============================站内搜索top统计==============================================
-		 */
+		builder.setBolt("unSummableKpiBolt", new UnSummableKpiBolt(config), 2)
+				.setNumTasks(4)
+				.localOrShuffleGrouping("userSessionBolt", UserSessionBolt.UnSUMMABLE_KPI_STREAM);
+		
 		builder.setBolt("searchTopStatsBolt", new SearchTopStatsBolt(config), 2)
 				.setNumTasks(4)
-				.fieldsGrouping("apacheLogSpout", logSpout.addSearchLogStream(SearchTopStatsBolt.getInputFields()), new Fields(ApacheLogSpout.FIELDS.ip.toString()));
+				.localOrShuffleGrouping("unSummableKpiBolt", KpiUpdateBolt.SEARCH_TOP_STREAM);
 
-		builder.setBolt("searchTopValueBolt", new SearchTopValueBolt(config), 2)
-				.setNumTasks(4)
-				.fieldsGrouping("searchTopStatsBolt", SearchTopStatsBolt.SEARCH_TOP_VALUE_STREAM, new Fields(SearchTopStatsBolt.FIELDS.searchValue.toString()));
-		
 		/**
 		 * ==============================保存日志、建立索引==============================================
 		 */
@@ -110,13 +107,13 @@ public class WebSiteStatisticTopology {
 		builder.setBolt(BaseTableIndexBolt.getCompentId(), bti, 2)
 				.setNumTasks(4)
 				.shuffleGrouping("saveApacheLogBolt", saveLogBolt.addStream(bti.getInputFields()));
-		
+//		
 		/**
 		 * ==============================创建 topology ==============================================
 		 */
 		// Configuration
 		Config conf = new Config();
-		conf.setNumWorkers(4);
+		conf.setNumWorkers(3);
 		//启动本地模式
 		if (args.length != 0 && args[0].equals("local")) {
 			conf.setDebug(false);
@@ -128,6 +125,8 @@ public class WebSiteStatisticTopology {
 		else {
 			try {
 				conf.setDebug(false);
+				conf.put(Config.TOPOLOGY_RECEIVER_BUFFER_SIZE,16);
+				conf.put(Config.TOPOLOGY_EXECUTOR_RECEIVE_BUFFER_SIZE, 8192);
 				StormSubmitter.submitTopology("WebSiteStatsTopology", conf, builder.createTopology());
 			} catch (Exception e) {
 				e.printStackTrace();

@@ -52,7 +52,7 @@ public class UserSessionHBaseDaoImpl implements UserSessionDao{
 	}
 
 	@Override
-	public List<String> getEndSessionKeys(String rowPrefix, long currentTime, int timeGap, int count) {
+	public List<String> getEndSessionKeys(long currentTime, int timeGap, int count) {
 		List<String> keys = new ArrayList<String>();
 		
 		long todayZeroTime = DateUtils.getTodayZeroHour();
@@ -65,7 +65,7 @@ public class UserSessionHBaseDaoImpl implements UserSessionDao{
 		queryInfo.setTimeRange(todayZeroTime, currentTime - timeGap);
 		queryInfo.setLimit(0, count);
 		
-	    List<SimpleHbaseDOWithKeyResult<UserSessionData>> list = userSessionTable.findObjectListAndKeyByRowPrefix(rowPrefix, UserSessionData.class, queryInfo);
+	    List<SimpleHbaseDOWithKeyResult<UserSessionData>> list = userSessionTable.findObjectListAndKeyByRowPrefix("", UserSessionData.class, queryInfo);
 		
 	    for(SimpleHbaseDOWithKeyResult<UserSessionData> rowObj: list){
 	    	keys.add(rowObj.getRowKey());
@@ -77,6 +77,6 @@ public class UserSessionHBaseDaoImpl implements UserSessionDao{
 		UserSessionDao userSessionDao = new UserSessionHBaseDaoImpl(HbaseUtils.getHConnection("10.100.2.92"));
 //		UserSessionData sessionData = userSessionDao.getUserSession(UserSessionData.generateKey("20140923", "1", "1410410219860079134"));
 //		System.out.println(sessionData.getLastVisitTime()); 
-		System.out.println(userSessionDao.getEndSessionKeys(UserSessionData.generateRowPrefix("20140928"), System.currentTimeMillis(), 30*60*1000, 100));
+		System.out.println(userSessionDao.getEndSessionKeys(System.currentTimeMillis(), 30*60*1000, 100));
 	}
 }

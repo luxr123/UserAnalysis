@@ -5,8 +5,11 @@ import kafka.utils.VerifiableProperties;
 import com.tracker.common.utils.IntegerUtil;
 
 /**
- * props.put("serializer.class", "com.tracer.test.kafka.custom.StringEncoder");
- * @author jason.hua
+ * 
+ * 文件名：IntegerEncoder
+ * 创建人：kris.chen
+ * 创建日期：2014-10-27 上午11:10:26
+ * 功能描述：Integer转byte[]
  *
  */
 public class IntegerEncoder implements kafka.serializer.Encoder<Integer> {

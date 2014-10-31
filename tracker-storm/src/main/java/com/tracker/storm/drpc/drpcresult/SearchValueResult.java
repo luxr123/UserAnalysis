@@ -10,7 +10,7 @@ import com.tracker.common.utils.StringUtil;
  * 文件名：SearchValueResult
  * 创建人：zhifeng.zheng
  * 创建日期：2014年10月22日 下午5:25:57
- * 功能描述：功能删除,不再使用.内部的静态类仍有用
+ * 功能描述：
  *
  */
 public class SearchValueResult extends DrpcResult implements Serializable{

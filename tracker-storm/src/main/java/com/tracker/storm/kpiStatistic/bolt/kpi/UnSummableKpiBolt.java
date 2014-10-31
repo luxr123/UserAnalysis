@@ -9,9 +9,11 @@ import org.slf4j.LoggerFactory;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
+import backtype.storm.topology.OutputFieldsDeclarer;
+import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 
-import com.tracker.common.cache.LocalCache;
 import com.tracker.common.log.ApacheSearchLog;
 import com.tracker.db.dao.kpi.UnSummableKpiDao;
 import com.tracker.db.dao.kpi.UnSummableKpiHBaseDaoImpl;
@@ -35,13 +37,10 @@ public class UnSummableKpiBolt extends BaseBolt {
 	private WebSiteKpiService websiteKpiService;
 	private SearchKpiService searchKpiService;
 	private UnSummableKpiDao unSummableKpiDao;
-	private LocalCache<String, String> unSummableKpiKeyCache;
-	
+	public static String SEARCH_TOP_STREAM = "searchTopStream";
+
 	private StormConfig config;//配置对象
 	//stream name
-	public static String SUMMABLE_KPI_STREAM = "summableKpiStream";
-	public static String USER_STATS_STREAM = "userStatsStream";
-
 	public UnSummableKpiBolt(StormConfig config) {
 		this.config = config;
 	}
@@ -49,10 +48,9 @@ public class UnSummableKpiBolt extends BaseBolt {
 	@Override
 	public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
 		super.prepare(stormConf, context, collector);
-		websiteKpiService = new WebSiteKpiService(config, true);
+		websiteKpiService = new WebSiteKpiService(config, false);
 		searchKpiService = new SearchKpiService(config);
 		unSummableKpiDao = new UnSummableKpiHBaseDaoImpl(config.getHbaseConnection(), UnSummableKpiHBaseDaoImpl.UNSUMMABLE_KPI_DAY_TABLE);
-		unSummableKpiKeyCache = new LocalCache<String, String>(30 * 60);
 	}
 
 	@Override
@@ -69,7 +67,9 @@ public class UnSummableKpiBolt extends BaseBolt {
 					LOG.warn(input.getSourceStreamId() + " => has field is null");
 					return;
 				}
-				
+				ApacheSearchLog searchLog = null;
+				if(searchLogObj != null) 
+					searchLog = (ApacheSearchLog)searchLogObj;
 				WebSiteKpiDimension kpiDimesion = (WebSiteKpiDimension)kpiDimesionObj;
 				List<String> unSummableKpiRowList = new ArrayList<String>();
 				if(isInitSession){
@@ -78,24 +78,22 @@ public class UnSummableKpiBolt extends BaseBolt {
 					unSummableKpiRowList.addAll(websiteKpiService.computeUnSummableKpiKeyForBasic(kpiDimesion.getDate(), kpiDimesion.getHour(), kpiDimesion.getWebId(), 
 							kpiDimesion.getVisitorType(), kpiDimesion.getPageSign(), ip, cookieId, kpiDimesion.getUserType(), userId));
 				}
-				if(searchLogObj != null){
-					unSummableKpiRowList.addAll(searchKpiService.computeUnSummbaleKpiKeys((ApacheSearchLog)searchLogObj));
-				}
-				unSummableKpiDao.updateUnSummableKpi(cleanUnSummableKpiKeys(unSummableKpiRowList));
 				
+				if(searchLog != null){
+					unSummableKpiRowList.addAll(searchKpiService.computeUnSummbaleKpiKeys(searchLog));
+				}
+				unSummableKpiDao.updateUnSummableKpi(unSummableKpiRowList);
+				
+				if(searchLog != null && searchLog.isCallSE){
+					m_collector.emit(SEARCH_TOP_STREAM, input, new Values(searchLog)); 
+				}
 		} catch(Exception e){
 			LOG.error("error to UserSessionBolt, input:" + input, e);
 		} 
 	}
 	
-	private List<String> cleanUnSummableKpiKeys(List<String> unSummableKpiRowList){
-		List<String> rows = new ArrayList<String>();
-		for(String key: unSummableKpiRowList){
-			if(unSummableKpiKeyCache.get(key) == null){
-				unSummableKpiKeyCache.put(key, key);
-				rows.add(key);
-			}
-		}
-		return rows;
+	@Override
+	public void declareOutputFields(OutputFieldsDeclarer declarer) {
+		declarer.declareStream(SEARCH_TOP_STREAM, new Fields(UserSessionBolt.FIELDS.searchLog.toString()));
 	}
 }

@@ -15,6 +15,7 @@ import com.google.common.collect.Lists;
 import com.tracker.common.log.ApachePVLog;
 import com.tracker.common.log.ApacheSearchLog;
 import com.tracker.db.dao.HBaseDao;
+import com.tracker.db.dao.data.model.VisitTypeData;
 import com.tracker.db.dao.siteSearch.model.SearchLog;
 import com.tracker.db.dao.webstats.model.WebVisitLog;
 import com.tracker.storm.common.DeliverBolt;
@@ -45,7 +46,7 @@ public class SaveApacheLogBolt extends DeliverBolt {
 	 */
 	private StormConfig config; //zookeeper地址
 	private DataService dataService; //数据服务，用于获取访问类型visitType值
-	private final String visitTypeName = "visit";//默认浏览访问类型名
+	private final String visitTypeName = VisitTypeData.VISIT_TYPE;//默认浏览访问类型名
 	private Random random; //随机值对象，用于存储的时候，区分开同一访问时间下的访问日志信息
 	
 	public final static String LOG_STREAM = "saveLogStream";

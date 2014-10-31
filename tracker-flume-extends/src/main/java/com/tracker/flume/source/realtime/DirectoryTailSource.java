@@ -17,13 +17,15 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Preconditions;
 
-/**
- * 实时监控日志目录，并实时传输日志文件
- * 
- * 必填值：trackDirPath、filePrefix
- * @author jason.hua
- *
- */
+ /**
+  * 
+  * 文件名：DirectoryTailSource
+  * 创建人：jason.hua   kris.chen
+  * 创建日期：2014-10-27 下午3:10:08
+  * 功能描述：实时监控日志目录，并实时传输日志文件
+  * 必填值：trackDirPath、filePrefix
+  *
+  */
 public class DirectoryTailSource extends AbstractSource implements
 		Configurable, EventDrivenSource {
 
@@ -78,8 +80,9 @@ public class DirectoryTailSource extends AbstractSource implements
 		} catch (IOException e) {
 			throw new FlumeException("Error instantiating RealTimelFileEventReader", e);
 		}
-		
+		//新建线程
 		executorService = Executors.newSingleThreadExecutor();
+		//开启执行线程
 		executorService.submit(new TailDirectoryRunnable(reader, sourceCounter));
 
 		super.start();
@@ -119,7 +122,12 @@ public class DirectoryTailSource extends AbstractSource implements
 	}
 	
 	/**
-	 * 跟踪日志文件，实时读取并传输数据到channel中
+	 * 
+	 * 文件名：TailDirectoryRunnable
+	 * 创建人：kris.chen
+	 * 创建日期：2014-10-27 下午2:48:17
+	 * 功能描述：跟踪日志文件，实时读取并传输数据到channel中
+	 *
 	 */
 	private class TailDirectoryRunnable implements Runnable {
 		private RealTimelFileEventReader reader;
@@ -135,6 +143,7 @@ public class DirectoryTailSource extends AbstractSource implements
 		public void run() {
 			try {
 				while (true) {
+					//读取batchSize大小的数据
 					List<Event> events = reader.readEvents(batchSize);
 					if (events.isEmpty()) {
 						if(sleepTime > 0)
@@ -143,7 +152,7 @@ public class DirectoryTailSource extends AbstractSource implements
 					}
 					sourceCounter.addToEventReceivedCount(events.size());
 					sourceCounter.incrementAppendBatchReceivedCount();
-
+					//传输数据到channel中
 					getChannelProcessor().processEventBatch(events);
 					reader.commit();
 					sourceCounter.addToEventAcceptedCount(events.size());

@@ -1,0 +1,35 @@
+########### These MUST be filled in for a storm configuration
+storm.zookeeper.servers:
+     - "10.100.2.67"
+     - "10.100.2.93"
+     - "10.100.2.92"
+nimbus.host: "10.100.50.163"
+storm.local.dir: "/home/hadoop/another/storm"
+logviewer.port: 10001
+logviewer.childopts: "-Xmx128m"
+logviewer.appender.name: "A1"
+# 
+# ##### These may optionally be filled in:
+#    
+## List of custom serializations
+# topology.kryo.register:
+#     - org.mycompany.MyType
+#     - org.mycompany.MyType2: org.mycompany.MyType2Serializer
+#
+## List of custom kryo decorators
+# topology.kryo.decorators:
+#     - org.mycompany.MyDecorator
+#
+## Locations of the drpc servers
+drpc.servers:
+     - "10.100.2.92"
+     - "10.100.2.93"
+
+## Metrics Consumers
+# topology.metrics.consumer.register:
+#   - class: "backtype.storm.metrics.LoggingMetricsConsumer"
+#     parallelism.hint: 1
+#   - class: "org.mycompany.MyMetricsConsumer"
+#     parallelism.hint: 1
+#     argument:
+#       - endpoint: "metrics-collector.mycompany.org"

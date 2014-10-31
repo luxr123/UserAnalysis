@@ -24,12 +24,22 @@ public class RequestUtil {
 		public static final String RTVISITOR_FUNC= "real_time_visitor";
 		public static final String RTUSER_FUNC= "real_time_user";
 		public static final String RTIP_FUNC= "real_time_ip";
+		public static final String RTRECORD_FUNC = "real_time_record";
 		
 		private static String getCommReq(String webId, int visitType, int userType,int startIndex, int count,String date){
 			return webId + StringUtil.ARUGEMENT_SPLIT + visitType + StringUtil.ARUGEMENT_SPLIT
 					+ userType + StringUtil.ARUGEMENT_SPLIT + startIndex + StringUtil.ARUGEMENT_SPLIT
 					+ count + StringUtil.ARUGEMENT_SPLIT+ date;
 		}
+		
+		public static String getRecordReq(String webId,  int userType,int startIndex, int count,String date){
+			if(webId==null)
+				return null;
+			return RTRECORD_FUNC + StringUtil.ARUGEMENT_SPLIT
+					+ getCommReq(webId, 0, userType, startIndex, count, date)
+					+ StringUtil.ARUGEMENT_SPLIT +StringUtil.ARUGEMENT_END;
+		}
+		
 		
 		public static String getCookieReq(String webId, int visitType,String cookie,int userType,int startIndex,
 				int count,String date){
@@ -107,6 +117,46 @@ public class RequestUtil {
 			if(tmp < splits.length){
 				int pos = 0;
 				splits = splits[tmp].split(StringUtil.KEY_VALUE_SPLIT);
+				for(int i = 0 ;i < splits.length;i++){
+					retVal.put(PARTITION + pos++,splits[i]);
+				}
+			}
+			return retVal;
+		}
+		public static Map<String,Object> parseReq(String request){
+			String splits[] = request.split(StringUtil.ARUGEMENT_SPLIT);
+			Map<String, Object> retVal = new HashMap<String, Object>();
+			int position = 1;
+			//parse common arguments
+			retVal.put(FIELDS.webId.toString(), splits[position++]);
+			try{
+				retVal.put(FIELDS.visitType.toString(), Integer.parseInt(splits[position++]));
+			}catch(Exception e){
+				retVal.put(FIELDS.visitType.toString(),null);
+			}
+			retVal.put(FIELDS.userType.toString(), splits[position++]);
+			try{
+				retVal.put(STARTINDEX, Integer.parseInt(splits[position++]));
+			}catch(Exception e){
+				retVal.put(STARTINDEX,null);
+			}
+			try{
+				retVal.put(COUNT, Integer.parseInt(splits[position++]));
+			}catch(Exception e){
+				retVal.put(COUNT, null);
+			}
+			retVal.put(DATETIME, splits[position++] + StringUtil.ARUGEMENT_SPLIT
+					+  splits[position++] + StringUtil.ARUGEMENT_SPLIT + splits[position++]);
+			//parse optional arguments
+			int offset = 0;
+			while(position < splits.length && !splits[position].equals(StringUtil.ARUGEMENT_END)){
+				retVal.put(ARGUMENT + offset++, splits[position++]);
+			}
+			position++;
+			//parse addition arguments which add by bolt
+			if(position < splits.length){
+				int pos = 0;
+				splits = splits[position].split(StringUtil.KEY_VALUE_SPLIT);
 				for(int i = 0 ;i < splits.length;i++){
 					retVal.put(PARTITION + pos++,splits[i]);
 				}

@@ -66,7 +66,7 @@ public class UserVisitLog {
 			m_drpcClients.add(new DRPCClient(hosts[j], drpcPort));
 			_drpcServers++;
 		}
-		m_baseTable = new HbaseCRUD("log_website", zookeeper);
+		m_baseTable = new HbaseCRUD("log_website_regions", zookeeper);
 		m_userIndex = new HbaseCRUD("user_index",zookeeper);
 		m_cookieIndex = new HbaseCRUD("cookie_index",zookeeper);
 		_point = 0;
@@ -235,7 +235,7 @@ public class UserVisitLog {
 			}
 			String splits[] = retVal.split(StringUtil.RETURN_ITEM_SPLIT);
 			total = Integer.parseInt(splits[0]);
-			if(total <= 0)
+			if(total == 0)
 				return null;
 			HbaseParam param = new HbaseParam();
 			HbaseResult hresult = new HbaseResult();
@@ -529,7 +529,7 @@ public class UserVisitLog {
 //			userFilter.setCookieId("1411002330209737795");
 			while(System.in.read() >= 0){
 				//test ip cookie user
-				VisitResult listUvlf = uvl.getLogByCookie("1", 1, 100,0,StringUtil.getCurrentDay(), userFilter);
+				VisitResult listUvlf = uvl.getLogByCookie("1", 1, 10,0,StringUtil.getCurrentDay(), userFilter);
 //				List<String> list = new ArrayList<String>();
 //				list.add("2014-09-03");
 //				list.add("2014-09-04");

@@ -14,18 +14,18 @@ public class TestDataFileReaderManager {
 	public static void main(String[] args) throws IOException, InterruptedException {
 		String trackDirPath = System.getProperty("user.dir");
 		DataFileReaderManager manager = new DataFileReaderManager(new ApacheLogParser(), "value");
-		ReadInfo currentReadInfo = new ReadInfo(0, System.currentTimeMillis(), "mock.log", trackDirPath + "/mock.log");
+		ReadInfo currentReadInfo = new ReadInfo(0, System.currentTimeMillis(), "test.log", trackDirPath + "\\test.log");
 		System.out.println(manager.isValid());
 		manager.resetFile(currentReadInfo);
 		System.out.println(manager.isValid());
 		
 		while(true){
-			System.out.println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$");
-			List<Event> events = manager.readEvents(4);
+			System.out.println("-----------------Read logs begin.-----------------");
+			List<Event> events = manager.readEvents(100000);
 			for(Event et :events){
 				System.out.println(new String(et.getBody()));
 			}
-			System.out.println("==============================");
+			System.out.println("-----------------Read logs end.-------------------");
 			Event event = manager.readEvent();
 			if(event != null){
 				System.out.println(new String(event.getBody()));

@@ -7,7 +7,6 @@ package com.tracker.db.dao.siteSearch.entity;
  * 功能描述：废弃
  *
  */
-@Deprecated
 public class SearchValueParam {
 	private Integer searchConType;
 	private String searchValue;

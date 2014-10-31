@@ -166,7 +166,9 @@ public class SearchRTTopHBaseDaoImpl implements SearchRTTopDao{
 				}
 				totalCount += response.getDataSize();
 			}
-			for(KV kv : dp.values()){
+			List<KV> list = dp.values();
+			for(int i = startIndex; i < startIndex + offset && i < list.size(); i++){
+				KV kv = list.get(i);
 				String sRowkey=kv.getKey();
 				long nValue=kv.getValue();
 				String sKey=sRowkey.substring(sRowkey.lastIndexOf(StringUtil.ARUGEMENT_SPLIT) + 1
@@ -237,7 +239,9 @@ public class SearchRTTopHBaseDaoImpl implements SearchRTTopDao{
 				totalCount += response.getDataSize();
 			}
 			
-			for(KV kv : dp.values()){
+			List<KV> list = dp.values();
+			for(int i = startIndex; i < startIndex + offset && i < list.size(); i++){
+				KV kv = list.get(i);
 				String sRowkey=kv.getKey();
 				long nValue=kv.getValue();
 				String sKey=sRowkey.substring(sRowkey.lastIndexOf(StringUtil.ARUGEMENT_SPLIT) + 1

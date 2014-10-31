@@ -1,0 +1,107 @@
+#!/bin/sh
+#
+# atd Starts/stop the "at" daemon
+#
+# chkconfig:   345 95 5
+# description: Runs commands scheduled by the "at" command at the time \
+#    specified when "at" was run, and runs batch commands when the load \
+#    average is low enough.
+
+### BEGIN INIT INFO
+# Provides: atd at batch
+# Required-Start: $local_fs
+# Required-Stop: $local_fs
+# Default-Start: 345
+# Default-Stop: 95
+# Short-Description: Starts/stop the "at" daemon
+# Description:      Runs commands scheduled by the "at" command at the time 
+#    specified when "at" was run, and runs batch commands when the load 
+#    average is low enough.
+### END INIT INFO
+
+# Source function library.
+. /etc/rc.d/init.d/functions
+
+exec=/home/hadoop/secondary/zookeeper-3.4.5/bin/zkServer.sh
+prog="zookeeper"
+
+pidfile=/home/hadoop/secondary/zookeeper/zookeeper_server.pid
+
+start() {
+    [ -x $exec ] || exit 5
+    echo -n $"Starting $prog: "
+    daemon "export ZOO_LOG_DIR='/home/hadoop/secondary/zookeeper';$exec start & > /dev/null"
+    retval=$?
+    echo
+    [ $retval -eq 0 ] && touch $pidfile
+}
+
+stop() {
+    echo -n $"Stopping $prog: "
+    if [ -f $pidfile ] ; then
+	daemon "$exec stop & > /dev/null"
+	retval=$?
+    else
+        failure $"Stopping $prog"
+    fi
+    echo
+     [ $retval -eq 0 ] 
+}
+
+restart() {
+    stop
+    start
+}
+
+reload() {
+    restart
+}
+
+force_reload() {
+    restart
+}
+
+rh_status() {
+    # run checks to determine if the service is running or use generic status
+    status -p $pidfile $prog
+}
+
+rh_status_q() {
+    rh_status >/dev/null 2>&1
+}
+
+
+case "$1" in
+    start)
+        $1
+        ;;
+    stop)
+        $1
+        ;;
+    restart)
+        $1
+        ;;
+    reload)
+        rh_status_q || exit 7
+        $1
+        ;;
+    force-reload)
+        force_reload
+        ;;
+    status)
+	if [ -f $pidfile ] 
+		then
+		echo " zookeeper has started pid: `cat $pidfile`"
+	else
+	 	echo "zookeeper has not start"
+	fi
+        ;;
+    condrestart|try-restart)
+        rh_status_q || exit 0
+        restart
+        ;;
+    *)
+        echo $"Usage: $0 {start|stop|status|restart|condrestart|try-restart|reload|force-reload}"
+        exit 2
+esac
+exit $?

@@ -8,13 +8,18 @@ import com.tracker.db.util.RowUtil;
 import com.tracker.db.util.Util;
 
 /**
- * 日期数据实体类
- * @author jason
+ * 
+ * 文件名：DateData
+ * 创建人：jason.hua
+ * 创建日期：2014-10-27 上午11:07:36
+ * 功能描述：日期数据实体类
  *
  */
 @HBaseTable(tableName = "d_dictionary", defaultFamily = "data")
 public class DateData {
-	
+	/**
+	 * row中各个字段index值
+	 */
 	public static final int ID_INDEX = 2;
 	
 	@HBaseColumn(qualifier = "date")
@@ -47,7 +52,11 @@ public class DateData {
 	public DateData(){}
 	
 	/**
-	 * 生成rowkey值
+	 * 函数名：generateRowKey
+	 * 功能描述：生成rowkey值
+	 * @param year 年YYYYMMDD
+	 * @param id 日期id
+	 * @return
 	 */
 	public static String generateRowKey(Integer year, Integer id){
 		Util.checkZeroValue(id);
@@ -55,8 +64,9 @@ public class DateData {
 	}
 	
 	/**
-	 * 生成row前缀
-	 * @param year
+	 * 函数名：generateRowPrefix
+	 * 功能描述：生成row前缀
+	 * @param year 年YYYYMMDD
 	 * @return
 	 */
 	public static String generateRowPrefix(Integer year){

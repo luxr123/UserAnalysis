@@ -33,9 +33,9 @@ public class RTUserProcess extends RTVisitorProcess {
 	 * 返回userid,如果不存在着返回cookieId
 	 */
 	protected String getKeyWord(List<String> keys){
-		String userId = keys.get(2);
+		String userId = keys.get(4);
 		if(userId == null || userId.equals(""))
-			return keys.get(1);
+			return keys.get(3);
 		else
 			return   userId;
 //		return keys.get(1);

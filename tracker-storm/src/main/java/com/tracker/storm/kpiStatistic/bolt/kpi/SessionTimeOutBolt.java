@@ -46,13 +46,12 @@ public class SessionTimeOutBolt extends BaseBolt{
 	@Override
 	public void execute(Tuple input) {
 		try{
-			String date = input.getStringByField(SignalSpout.FIELDS.date.toString());
 			Long curTime = input.getLongByField(SignalSpout.FIELDS.curTime.toString());
 			if(curTime == null){
 				LOG.warn("curTime is null");
 				return;
 			}
-			List<String> keys = userSessionDao.getEndSessionKeys(UserSessionData.generateRowPrefix(date), curTime, sessionGapTime, END_SESSION_COUNT);
+			List<String> keys = userSessionDao.getEndSessionKeys(curTime, sessionGapTime, END_SESSION_COUNT);
 			if(keys != null && keys.size() > 0){
 				for(String key: keys){
 					String cookieId = RowUtil.getRowField(key, UserSessionData.COOKIE_ID_INDEX);

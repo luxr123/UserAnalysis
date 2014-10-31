@@ -31,9 +31,9 @@ public interface UserSessionDao {
 	public void deleteUserSession(String ...keys);
 
 	/**
-	 * 获取{currentTime - timeGap}时间之前的会话（此类会话归为已结束）
+	 * 获取今日凌晨到{currentTime - timeGap}时间之前的会话（此类会话归为已结束）
 	 */
-	public List<String> getEndSessionKeys(String rowKeyPrefix, long currentTime, int timeGap, int count);
+	public List<String> getEndSessionKeys(long currentTime, int timeGap, int count);
 
 }
    

@@ -22,6 +22,7 @@ import com.tracker.db.dao.kpi.UnSummableKpiHBaseDaoImpl;
 import com.tracker.db.dao.kpi.entity.UnSummableKpiParam;
 import com.tracker.db.dao.kpi.model.SearchSummableKpi;
 import com.tracker.db.dao.kpi.model.SearchSummableKpi.ConditionRowGenerator;
+import com.tracker.db.dao.kpi.model.SearchSummableKpi.PageNumResultGenerator;
 import com.tracker.db.dao.kpi.model.SearchSummableKpi.ResultRowGenerator;
 import com.tracker.db.dao.siteSearch.SearchRTTopDao;
 import com.tracker.db.dao.siteSearch.SearchRTTopHBaseDaoImpl;
@@ -46,7 +47,7 @@ public class SiteSearchRTDayServiceImpl implements SiteSearchService{
 	 * 总搜索次数
 	 */
 	public long getTotalSearchCount(Integer webId, Integer timeType, String time, Integer seId, Integer searchType)  {
-		String rowPrefix = ResultRowGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType, SearchResultType.DISPLAY_PAGE_NUM.getType());
+		String rowPrefix = ResultRowGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType);
 		Map<String, SearchSummableKpi> resultMap = summableKpiDao.getSearchKpi(rowPrefix, ResultRowGenerator.DATE_INDEX);
 		if(resultMap.containsKey(time)){
 			return resultMap.get(time).getPv();
@@ -65,7 +66,7 @@ public class SiteSearchRTDayServiceImpl implements SiteSearchService{
 		String time = times.get(0);
 		
 		//计算pv和总搜索时间
-		String rowPrefix = ResultRowGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType, SearchResultType.DISPLAY_PAGE_NUM.getType());
+		String rowPrefix = ResultRowGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType);
 		Map<String, SearchSummableKpi> resultMap = summableKpiDao.getSearchKpi(rowPrefix, ResultRowGenerator.DATE_INDEX);
 		SearchSummableKpi kpiResult = resultMap.get(time);
 		if(kpiResult == null){
@@ -75,8 +76,8 @@ public class SiteSearchRTDayServiceImpl implements SiteSearchService{
 		//计算首页和翻页次数
 		long pageTurningCount = 0;
 		long mainPageCount = 0;
-		rowPrefix = ResultRowGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType, SearchResultType.DISPLAY_PAGE_NUM.getType());
-		Map<String, SearchSummableKpi> pageNumMap = summableKpiDao.getSearchKpi(rowPrefix, ResultRowGenerator.FIELD_VALUE_INDEX);
+		rowPrefix = PageNumResultGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType, SearchResultType.DISPLAY_PAGE_NUM.getType());
+		Map<String, SearchSummableKpi> pageNumMap = summableKpiDao.getSearchKpi(rowPrefix, PageNumResultGenerator.FIELD_VALUE_INDEX);
 		for(String key: pageNumMap.keySet()){
 			if(key.equals(SearchPageNumType.ONE.getType()+"")){
 				mainPageCount = pageNumMap.get(key).getPv();
@@ -118,8 +119,26 @@ public class SiteSearchRTDayServiceImpl implements SiteSearchService{
 	public Map<String, SearchStats> getSearchResultStats(Integer webId, Integer timeType, String time, Integer seId, Integer searchType, Integer resultType){
 		Map<String, SearchStats> result = new HashMap<String, SearchStats>();
 		
-		String rowPrefix = ResultRowGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType, resultType);
-		Map<String, SearchSummableKpi> resultMap = summableKpiDao.getSearchKpi(rowPrefix, ResultRowGenerator.FIELD_VALUE_INDEX);
+		
+		Map<String, SearchSummableKpi> resultMap = new HashMap<String, SearchSummableKpi>();
+		
+		if(resultType == SearchResultType.DISPLAY_PAGE_NUM.getType()){
+			resultMap = summableKpiDao.getSearchKpi(PageNumResultGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType, resultType), PageNumResultGenerator.FIELD_VALUE_INDEX);
+		} else{
+			String rowPrefix = ResultRowGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType);
+			int fieldIdIndex = 0;
+			if(resultType == SearchResultType.SEARCH_COST.getType()){
+				fieldIdIndex = ResultRowGenerator.COST_TYPE_INDEX;
+			} else if(resultType == SearchResultType.SEARCH_RESULT_COUNT.getType()){
+				fieldIdIndex = ResultRowGenerator.COUNT_TYPE_INDEX;
+			} else if(resultType == SearchResultType.SEARCH_TIME.getType()){
+				fieldIdIndex = ResultRowGenerator.TIME_TYPE_INDEX;
+			}
+			if(fieldIdIndex > 0){
+				resultMap = summableKpiDao.getSearchKpi(rowPrefix, fieldIdIndex);
+			}
+		}
+		
 		for(String key: resultMap.keySet()){
 			SearchSummableKpi kpiResult = resultMap.get(key);
 			SearchStats stats = new SearchStats();
@@ -153,7 +172,7 @@ public class SiteSearchRTDayServiceImpl implements SiteSearchService{
 	public Map<String, SearchStats> getSearchPageStats(Integer webId, Integer timeType, String time, Integer seId, Integer searchType){
 		Map<String, SearchStats> result = new HashMap<String, SearchStats>();
 		
-		String rowPrefix = ResultRowGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType, SearchResultType.DISPLAY_PAGE_NUM.getType());
+		String rowPrefix = ResultRowGenerator.generateRowPrefix(time, String.valueOf(webId), seId, searchType);
 		Map<String, SearchSummableKpi> resultMap = summableKpiDao.getSearchKpi(rowPrefix, ResultRowGenerator.SEARCH_PAGE_SHOW_INDEX);
 		
 		//searchPage + showType

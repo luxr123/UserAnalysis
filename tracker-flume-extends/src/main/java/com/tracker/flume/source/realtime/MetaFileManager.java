@@ -12,11 +12,13 @@ import org.slf4j.LoggerFactory;
 import com.tracker.flume.source.realtime.RealTimelFileEventReader.ReadInfo;
 
 /**
- * 管理meta数据
+ * 
+ * 文件名：MetaFileManager
+ * 创建人：jason.hua
+ * 创建日期：2014-10-27 下午3:06:08
+ * 功能描述：管理meta数据
  * 1. 使用两条记录在一定程度上来确保数据的精准性,第一行是上次readInfo数据，第二行数上上次readInfo数据
  * 2. 在更新meta数据的时候，先更新第二行数据，然后再更新第一行数据
- * 
- * @author jason.hua
  *
  */
 public class MetaFileManager {
@@ -51,7 +53,11 @@ public class MetaFileManager {
 	}
 	
 	/**
-	 *  从metaFile中获取用户读取日志文件信息，并对其进行验证
+	 * 
+	 * 函数名：initReadInfo
+	 * 创建人：kris.chen
+	 * 创建日期：2014-10-27 下午3:07:15
+	 * 功能描述：从metaFile中获取用户读取日志文件信息，并对其进行验证
 	 */
 	private void initReadInfo(){
 		ReadInfo lastAndLastReadInfo = null;
@@ -78,9 +84,15 @@ public class MetaFileManager {
 	}
 	
 	/**
-	 * 验证数据是否正确，有没有缺失
+	 * 
+	 * 函数名：verifyReadInfo
+	 * 创建人：kris.chen
+	 * 创建日期：2014-10-27 下午3:07:53
+	 * 功能描述： * 验证数据是否正确，有没有缺失
 	 * metaFile中行格式：readFileLength + "," + readTime + "," + filePath + "," + readFileName，
 	 * 其中filePath放在行最后，所以只要验证filePath的文件是否存在，则可以知道此readInfo是否有效。
+	 * @param readInfo
+	 * @return
 	 */
 	private boolean verifyReadInfo(ReadInfo readInfo){
 		if(readInfo == null)
@@ -93,7 +105,12 @@ public class MetaFileManager {
 	}
 	
 	/**
-	 * 更新ReadInfo数据到metaFile中
+	 * 
+	 * 函数名：updateReadInfo
+	 * 创建人：kris.chen
+	 * 创建日期：2014-10-27 下午3:08:26
+	 * 功能描述：更新ReadInfo数据到metaFile中
+	 * @param currentReadInfo
 	 */
 	public void updateReadInfo(ReadInfo currentReadInfo){
 		if(currentReadInfo == null)

@@ -32,14 +32,17 @@ import com.tracker.flume.source.realtime.FileMonitorRunnable.DirectoryTailEvent;
 import com.tracker.flume.source.realtime.FileMonitorRunnable.FileEventType;
 
 /**
- * 监控指定目录下的文件，并实时读取
+ * 
+ * 文件名：RealTimelFileEventReader
+ * 创建人：jason.hua
+ * 创建日期：2014-10-27 下午3:11:53
+ * 功能描述：监控指定目录下的文件，并实时读取
  * 包括3个部分：
  * 1. 目录监听器，用于监听目录下文件的created、modify、deleted
  * 2. metaFile管理
  * 3. 日志文件实时读取
- * 
  * 监听到created的事件放入eventQueue中，待读取文件信息放入fileQueue中
- * @author jason.hua
+ *
  */
 public class RealTimelFileEventReader implements ReliableEventReader{
 	private static final Logger logger = LoggerFactory
@@ -65,7 +68,17 @@ public class RealTimelFileEventReader implements ReliableEventReader{
 	private ScheduledExecutorService readInfoUpdateExec;
 
 	/**
-	 * Create a RealTimeFileEventReader to watch the given directory
+	 * 
+	 * 构造方法的描述：Create a RealTimeFileEventReader to watch the given directory
+	 * 创建人：kris.chen
+	 * 创建日期：2014-10-27 下午3:13:25
+	 * @param trackDirPath
+	 * @param filePrefix
+	 * @param completedSuffix
+	 * @param initialDelay
+	 * @param period
+	 * @param logParserClass
+	 * @param header
 	 */
 	private RealTimelFileEventReader(String trackDirPath,
 			String filePrefix,
@@ -142,12 +155,16 @@ public class RealTimelFileEventReader implements ReliableEventReader{
 //			e.printStackTrace();
 //		}
 	}
-	
-	
-	/**
-	 * 扫描指定目录及metaFile，获取未完成传输的日志文件信息
-	 * 文件信息按创建时间排序
-	 */
+
+	 /**
+	  * 
+	  * 函数名：scanDirectory
+	  * 创建人：kris.chen
+	  * 创建日期：2014-10-27 下午3:15:03
+	  * 功能描述：扫描指定目录及metaFile，获取未完成传输的日志文件信息
+	  * 文件信息按创建时间排序
+	  * @param trackerDirectory
+	  */
 	private void scanDirectory(File trackerDirectory){
 		//扫描指定目录，获取待传输日志文件
 		File[] files = trackerDirectory.listFiles(new FileFilter(){
@@ -212,6 +229,7 @@ public class RealTimelFileEventReader implements ReliableEventReader{
 	 * 从流中获取下一行数据。
 	 * 如果返回null,且文件监听器监听到有新日志文件（匹配日志文件命名规范），而默认此文件已经被读取完了。 
 	 */
+	
 	@Override
 	public Event readEvent() throws IOException {
 		List<Event> events = readEvents(1);
@@ -299,9 +317,11 @@ public class RealTimelFileEventReader implements ReliableEventReader{
 	}
 
 	/**
-	 * Closes currentFile and attempt to rename it.
 	 * 
-	 * 对已经传输完毕的日志进行重命名，以标示它已经传输完毕，日志以.completed结尾。
+	 * 函数名：retireCurrentFile
+	 * 创建人：kris.chen
+	 * 创建日期：2014-10-27 下午3:16:12
+	 * 功能描述：对已经传输完毕的日志进行重命名，以标示它已经传输完毕，日志以.completed结尾。
 	 */
 	private void retireCurrentFile(){
 		if(dataFileManager == null || !dataFileManager.isValid()){
@@ -342,7 +362,12 @@ public class RealTimelFileEventReader implements ReliableEventReader{
 	}
 	
 	/**
-	 * entity object
+	 * 
+	 * 文件名：ReadInfo
+	 * 创建人：kris.chen
+	 * 创建日期：2014-10-27 下午3:16:57
+	 * 功能描述：读取entity object
+	 *
 	 */
 	public static class ReadInfo {
 		private String filePath;
@@ -419,9 +444,14 @@ public class RealTimelFileEventReader implements ReliableEventReader{
 		}
 	}
 
-	/**
-	 * Special builder class for RealFileReader
-	 */
+	 /**
+	  * 
+	  * 文件名：Builder
+	  * 创建人：kris.chen
+	  * 创建日期：2014-10-27 下午3:18:00
+	  * 功能描述：Special builder class for RealFileReader
+	  *
+	  */
 	public static class Builder {
 		private String trackDirPath;
 		private String filePrefix;

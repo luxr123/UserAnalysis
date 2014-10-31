@@ -33,6 +33,7 @@ public class RTVisitorResult extends DrpcResult implements Serializable{
 		// TODO Auto-generated method stub
 		if(part != null){
 			RTVisitorResult rtvr = (RTVisitorResult)part;
+			if(m_total >= 0)
 			m_total += rtvr.getTotal();
 			Integer size = m_list.size();
 			Integer input_size = rtvr.getBuff().size();

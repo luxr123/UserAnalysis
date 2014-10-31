@@ -15,12 +15,14 @@ import org.apache.flume.FlumeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * 监听器会监听{@code trackDirPath}目录下，并以{@code filePrefix}开头，且忽略以{@code ignoreCompletedSuffix}结尾的文件
- * 
- * @author jason.hua
- *
- */
+ /**
+  * 
+  * 文件名：FileMonitorRunnable
+  * 创建人：kris.chen
+  * 创建日期：2014-10-27 下午3:09:33
+  * 功能描述：监听器会监听{@code trackDirPath}目录下，并以{@code filePrefix}开头，且忽略以{@code ignoreCompletedSuffix}结尾的文件
+  *
+  */
 public class FileMonitorRunnable implements Runnable{
 	private static final Logger logger = LoggerFactory
 			.getLogger(FileMonitorRunnable.class);
@@ -66,9 +68,13 @@ public class FileMonitorRunnable implements Runnable{
 		fileMonitor.start();
 	}
 
-
 	/**
-	 * 监听文件，并对于create、change、delete事件进行处理,目前只监听created事件
+	 * 
+	 * 文件名：CustomFileListener
+	 * 创建人：kris.chen
+	 * 创建日期：2014-10-27 下午2:59:59
+	 * 功能描述：监听文件，并对于create、change、delete事件进行处理,目前只监听created事件
+	 *
 	 */
 	private class CustomFileListener implements FileListener{
 		public FileObject trackDirFileObj;
@@ -119,20 +125,17 @@ public class FileMonitorRunnable implements Runnable{
 				if(file.isDirectory()){
 					return false;
 				}
-				
 				//验证此文件是否是指定目录的子文件
 				FileObject parentFileObj = fileObj.getParent();
 				if(parentFileObj == null){
 					logger.error("no file parent, " +  fileObj.getURL());
 					return false;
 				}
-				
 				String parentFilePath = parentFileObj.getName().getPath();
 				if(trackDirFileObj != null && !trackDirFileObj.getName().getPath().equals(parentFilePath)){
 					logger.info("create file is not sub file of target directory : " + fileObj.getURL());
 					return false;
 				}
-				
 				//验证文件名是否符合指定命名规范
 				String fileName = fileObj.getName().getBaseName();
 				if(fileName.startsWith(filePrefix) && !fileName.endsWith(ignoreCompletedSuffix))
@@ -156,7 +159,14 @@ public class FileMonitorRunnable implements Runnable{
 		FILE_CHANGED,
 		FILE_DELETED
 	}
-	
+	/**
+	 * 
+	 * 文件名：DirectoryTailEvent
+	 * 创建人：kris.chen
+	 * 创建日期：2014-10-27 下午3:03:43
+	 * 功能描述：目录监控事件
+	 *
+	 */
 	public static class DirectoryTailEvent{
 		FileEventType type;
 		FileChangeEvent event;

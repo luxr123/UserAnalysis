@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+
+<configuration>
+	<property>
+		<name>hadoop.tmp.dir</name>
+		<value>/home/hadoop/secondary/hadoop-2.2.0/tmp</value>
+		<description>A base for other temporary directories.</description>
+	</property>
+	<property>
+		<name>io.file.buffer.size</name>
+		<value>102400</value>
+	</property>
+	<property>
+		<name>fs.defaultFS</name>
+		<value>hdfs://mycluster</value>
+	</property>
+	<property>
+		<name>ha.zookeeper.quorum</name>
+		<value>10.100.2.92:2181,10.100.2.93:2181,10.100.2.67:2181</value>
+	</property>
+</configuration>

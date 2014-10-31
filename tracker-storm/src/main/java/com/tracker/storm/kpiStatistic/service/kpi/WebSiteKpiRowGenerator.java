@@ -9,6 +9,10 @@ import com.tracker.db.dao.kpi.entity.UnSummableKpiParam;
 import com.tracker.db.dao.kpi.entity.UnSummableKpiParam.WebSiteRowGenerator;
 import com.tracker.db.dao.kpi.model.PageSummableKpi;
 import com.tracker.db.dao.kpi.model.WebSiteSummableKpi;
+import com.tracker.db.dao.kpi.model.WebSiteSummableKpi.AreaRowGenerator;
+import com.tracker.db.dao.kpi.model.WebSiteSummableKpi.BasicRowGenerator;
+import com.tracker.db.dao.kpi.model.WebSiteSummableKpi.KWRowGenerator;
+import com.tracker.db.dao.kpi.model.WebSiteSummableKpi.SysEnvRowGenerator;
 import com.tracker.db.util.RowUtil;
 import com.tracker.storm.kpiStatistic.service.entity.WebSiteKpiDimension;
 
@@ -31,22 +35,17 @@ public class WebSiteKpiRowGenerator {
 		int hour = kpiDimesion.getHour();
 		
 		//basic，基于日期、角色、小时段
-		rows.add(WebSiteSummableKpi.BasicRowGenerator.generateRowKey(date, webId, visitorType, hour, kpiDimesion.getUserType()));
+		rows.add(BasicRowGenerator.generateRowKey(date, webId, visitorType, hour, kpiDimesion.getUserType(), kpiDimesion.getRefType(), kpiDimesion.getRefDomain()));
 		
 		//area, 国家、省份、市
-		rows.add(WebSiteSummableKpi.AreaRowGenerator.generateRowKey(date, webId, visitorType, 
-				kpiDimesion.getCountryId(), kpiDimesion.getProvinceId(), kpiDimesion.getCityId()));
+		rows.add(AreaRowGenerator.generateRowKey(date, webId, visitorType, kpiDimesion.getCountryId(), kpiDimesion.getProvinceId(), kpiDimesion.getCityId()));
 		
-		//ref， 基于来源类型、来源域名、外部搜索关键词
-		rows.add(WebSiteSummableKpi.RefRowGenerator.generateRowKey(date, webId, visitorType, kpiDimesion.getRefType(), kpiDimesion.getRefDomain(), kpiDimesion.getRefKeyword()));
+		//ref， 基于外部搜索关键词
+		rows.add(KWRowGenerator.generateRowKey(date, webId, visitorType, kpiDimesion.getRefDomain(), kpiDimesion.getRefKeyword()));
 	
-		//sys-basic， 基于操作系统、浏览器、语言环境、是否支持cookie、屏幕颜色
-		rows.add(WebSiteSummableKpi.SysBasicRowGenerator.generateRowKey(date, webId, visitorType, kpiDimesion.getOs(), 
-				kpiDimesion.getBrowser(), kpiDimesion.getLanguage(), kpiDimesion.getIsCookieEnabled(), kpiDimesion.getColorDepth()));
-		
-		//sys-screen， 基于屏幕分辩率
-		if(kpiDimesion.getScreen() != null)
-			rows.add(WebSiteSummableKpi.SysScreenRowGenerator.generateRowKey(date, webId, visitorType, kpiDimesion.getScreen()));
+		//sys-basic， 基于操作系统、浏览器、语言环境、是否支持cookie、屏幕颜色、屏幕分辩率
+		rows.add(SysEnvRowGenerator.generateRowKey(date, webId, visitorType, kpiDimesion.getOs(), 
+				kpiDimesion.getBrowser(), kpiDimesion.getLanguage(), kpiDimesion.getIsCookieEnabled(), kpiDimesion.getColorDepth(), kpiDimesion.getScreen()));
 		return rows;
 	}
 	
@@ -74,8 +73,10 @@ public class WebSiteKpiRowGenerator {
 		String pageSign = kpiDimesion.getPageSign();
 		
 		List<String> rowList = new ArrayList<String>();
-
-		//日期、小时段、页面
+		//日期
+		rowList.add(WebSiteRowGenerator.generateRowKey(UnSummableKpiParam.SIGN_WEB_DATE, kpi, date, webId, visitorType, date, ipOrCookieId));
+		
+		//小时段、页面
 		rowList.addAll(getUnSummableKpiRowsForBasic(kpi, date, visitorType, webId, pageSign, kpiDimesion.getHour(), ipOrCookieId));
 		
 		//入口页
@@ -143,8 +144,6 @@ public class WebSiteKpiRowGenerator {
 	public static List<String> getUnSummableKpiRowsForBasic(String kpi, String date, Integer visitorType, 
 			String webId, String pageSign, int hour, String ipOrCookieId){
 		List<String> rowList = new ArrayList<String>();
-		//日期
-		rowList.add(WebSiteRowGenerator.generateRowKey(UnSummableKpiParam.SIGN_WEB_DATE, kpi, date, webId, visitorType, date, ipOrCookieId));
 		//小时段
 		rowList.add(WebSiteRowGenerator.generateRowKey(UnSummableKpiParam.SIGN_WEB_TIME, kpi, date, webId, visitorType, hour + "", ipOrCookieId));
 		//页面

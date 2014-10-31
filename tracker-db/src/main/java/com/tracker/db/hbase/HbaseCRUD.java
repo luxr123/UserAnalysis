@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.Set;
 
 import org.apache.hadoop.hbase.Cell;
@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.tracker.common.utils.StringUtil;
-
 /**
  * 
  * 文件名：HbaseCRUD
@@ -46,19 +45,21 @@ public class HbaseCRUD extends HbaseProxy implements Serializable{
 	 */
 	private static Logger logger = LoggerFactory.getLogger(HbaseCRUD.class);
 	private static final long serialVersionUID = 70638568427015187L;
+	private static final int MAXRETURN = 1000;
 	protected int m_scanCacheSize;
 	private String m_scanStartRow;
 	private String m_scanEndRow;
 
 	public HbaseCRUD(String tablename,String zookeeper) {
 		super(tablename,zookeeper);
-		m_scanCacheSize = 1000;
+		m_scanCacheSize = MAXRETURN;
 		m_scanStartRow = null;
 		// TODO Auto-generated constructor stub
 	}
 	
 	public void setReturnSize(int size){
-		m_scanCacheSize = size;
+		if(size <= MAXRETURN)
+			m_scanCacheSize = size;
 	}
 
 	public boolean writehbase(HbaseParam param) {
@@ -322,6 +323,42 @@ public class HbaseCRUD extends HbaseProxy implements Serializable{
 		m_scanStartRow = startRow;
 		readhbase(param, hresult);
 		m_scanStartRow = null;
+	}
+	
+	public HbaseResult getRowKeys(HbaseParam param) {
+		HbaseResult hresult = new HbaseResult();
+		if (param == null || m_table == null)
+			return null;
+		Scan scan = new Scan();
+		if (param.getFilter().getFilters().size() != 0) {
+			scan.setFilter(param.getFilter());
+		}
+		try {
+			scan.setCaching(m_scanCacheSize);
+			ResultScanner resultScanner = m_table.getScanner(scan);
+			Result result = null;
+			for (int i = 0; i < m_scanCacheSize; i++) {
+				result = resultScanner.next();
+				if (result != null)
+					hresult.addResult(result);
+				else
+					break;
+			}
+			// free the resource which on the server-side
+			resultScanner.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return hresult;
+	}
+	
+	public String getRowKey(String regx) {
+		return null;
+	}
+	public Map<String, Float> getUerJobScoreDesc(String user1, String user2) {
+		Map<Float, String> map = new TreeMap<Float, String>().descendingMap();
+		Map<String, Float> ret = new HashMap<String, Float>();
+		return ret;
 	}
 
 	/**

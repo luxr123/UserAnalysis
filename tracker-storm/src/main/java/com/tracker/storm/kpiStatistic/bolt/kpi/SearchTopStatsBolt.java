@@ -1,5 +1,6 @@
 package com.tracker.storm.kpiStatistic.bolt.kpi;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -14,12 +15,14 @@ import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 
 import com.google.common.collect.Lists;
+import com.tracker.common.cache.LocalCache;
 import com.tracker.common.log.ApacheSearchLog;
 import com.tracker.common.utils.DateUtils;
 import com.tracker.common.utils.JsonUtil;
 import com.tracker.db.dao.siteSearch.SearchRTTopDao;
 import com.tracker.db.dao.siteSearch.SearchRTTopHBaseDaoImpl;
 import com.tracker.db.dao.siteSearch.entity.SearchTopResTimeResult.ResponseTimeRecord;
+import com.tracker.db.dao.siteSearch.entity.SearchValueParam;
 import com.tracker.storm.common.StormConfig;
 import com.tracker.storm.common.basebolt.BaseBolt;
 import com.tracker.storm.data.DataService;
@@ -32,8 +35,10 @@ public class SearchTopStatsBolt extends BaseBolt {
 	private DataService dataService = null;
 	public static String SEARCH_TOP_VALUE_STREAM = "searchTopValueStream";
 	private SearchRTTopDao searchRTTopDao;
-
 	
+	private LocalCache<String, ResTimeEntity> topResTimeCache;
+	private final static int RES_TIME_TOP_COUNT = 500;
+
 	public SearchTopStatsBolt(StormConfig config) {
 		this.config = config;
 	}
@@ -44,13 +49,14 @@ public class SearchTopStatsBolt extends BaseBolt {
 		super.prepare(stormConf, context, collector);
 		dataService = new DataService(config.getHbaseConnection());
 		searchRTTopDao = new SearchRTTopHBaseDaoImpl(config.getHbaseConnection());
+		topResTimeCache = new LocalCache<String, SearchTopStatsBolt.ResTimeEntity>(24 * 60 * 60);
 	}
 
 	
 	@Override
 	public void execute(Tuple input) {
 		try{
-			Object logObj = input.getValueByField(ApacheLogSpout.FIELDS.apacheLogObj.toString());
+			Object logObj = input.getValueByField(UserSessionBolt.FIELDS.searchLog.toString());
 			if(logObj == null){
 				LOG.warn("apacheLogObj is null");
 				return;
@@ -72,12 +78,14 @@ public class SearchTopStatsBolt extends BaseBolt {
 			 * 统计Top最慢响应时间
 			 */
 			if(responseTime != null && searchParam != null && totalCount != null && log.getCookieId() != null){
-				ResponseTimeRecord record = new ResponseTimeRecord(responseTime, serverLogTime, totalCount, searchParam);
-				record.setUserId(log.getUserId());
-				record.setUserType(log.getUserType());
-				record.setIp(log.getIp());
-				record.setCookieId(log.getCookieId());
-				searchRTTopDao.updateMaxRTRecord(date, webId, seId, searchType, record);
+				if(isTopResTime(date, responseTime)){
+					ResponseTimeRecord record = new ResponseTimeRecord(responseTime, serverLogTime, totalCount, searchParam);
+					record.setUserId(log.getUserId());
+					record.setUserType(log.getUserType());
+					record.setIp(log.getIp());
+					record.setCookieId(log.getCookieId());
+					searchRTTopDao.updateMaxRTRecord(date, webId, seId, searchType, record);
+				}
 			}
 			
 			/**
@@ -93,16 +101,38 @@ public class SearchTopStatsBolt extends BaseBolt {
 			 */
 			String searchConditionJson = log.getSearchConditionJson();
 			if(searchConditionJson != null){
+				List<SearchValueParam> list = new ArrayList<SearchValueParam>();
 				Map<String, Object> seConditionMap = JsonUtil.parseJSON2Map(searchConditionJson);
 				//添加搜索次数
 				for(String seCondName: seConditionMap.keySet()){
 					Integer seConType = dataService.getSearchConditionType(seId, searchType, seCondName);
-					emitTopValue(input, date, webId, seId, searchType, seConType, seConditionMap.get(seCondName).toString());
+					list.add(new SearchValueParam(seConType, seConditionMap.get(seCondName).toString(), 1L));
 				}
+				if(list.size() > 0)
+					searchRTTopDao.updateMostForSearchValue(date, webId, seId, searchType, list);
 			}	
 		} catch(Exception e){
 			LOG.error("SearchTopStatsBolt => input:" + input, e);
 		}
+	}
+	
+	private boolean isTopResTime(String date, int responseTime){
+		ResTimeEntity entity = topResTimeCache.get(date);
+		if(entity == null){
+			entity = new ResTimeEntity();
+			entity.incrTopCount();
+			entity.setTopMinResTime(responseTime);
+			topResTimeCache.put(date, entity);
+			return true;
+		} else {
+			if(entity.getTopMinResTime() < responseTime || entity.getTopCount() < RES_TIME_TOP_COUNT){
+				entity.incrTopCount();
+				entity.setTopMinResTime(responseTime);
+				topResTimeCache.put(date, entity);
+				return true;
+			} 
+		}
+		return false;
 	}
 	
 	private void emitTopValue(Tuple input, String date, String webId, Integer seId, Integer searchType, Integer seConType, String searchValue){
@@ -123,5 +153,24 @@ public class SearchTopStatsBolt extends BaseBolt {
 	
 	public static List<String> getInputFields() {
 		return Lists.newArrayList(ApacheLogSpout.FIELDS.apacheLogObj.toString(), ApacheLogSpout.FIELDS.ip.toString());
+	}
+	
+	public class ResTimeEntity{
+		private long topMinResTime = 0;
+		private int topCount = 0;
+		
+		public long getTopMinResTime() {
+			return topMinResTime;
+		}
+		public void setTopMinResTime(long topMinResTime) {
+			this.topMinResTime = topMinResTime;
+		}
+		public int getTopCount() {
+			return topCount;
+		}
+		public void incrTopCount() {
+			this.topCount++;
+		}
+		
 	}
 }

@@ -65,14 +65,19 @@ public class FieldIndexBolt extends DeliverDBBolt {
 		// TODO Auto-generated method stub
 		String fieldKey = input.getStringByField(m_indexField.toString());
 		//confirm the visitType
-		Integer visitType = input.getIntegerByField(FIELDS.visitType.toString());
+
 		if(fieldKey == null || fieldKey.equals("")){
 			return;
 		}
-		String mainKey = input.getStringByField("mainkey");
-		String webId = input.getStringByField(FIELDS.webId.toString());
 		Long logTime = Long.parseLong(input.getStringByField(FIELDS.serverLogTime.toString()));
 		String date  = StringUtil.getDayByMillis(logTime);
+		String currentDate = StringUtil.getCurrentDay();
+		if(!date.equals(currentDate))
+			return;
+		Integer visitType = input.getIntegerByField(FIELDS.visitType.toString());
+		String mainKey = input.getStringByField("mainkey");
+		String webId = input.getStringByField(FIELDS.webId.toString());
+
 		List<String> appends = new ArrayList<String>();
 		if(input.contains(FIELDS.userType.toString())){
 			appends.add(input.getStringByField(FIELDS.userType.toString()));

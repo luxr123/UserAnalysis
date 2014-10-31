@@ -29,8 +29,11 @@ import com.tracker.common.utils.JsonUtil;
 import com.tracker.flume.kafka.partitioner.ProducerPartitioner;
 
 /**
- * send data to kafka
- * @author jason.hua
+ * 
+ * 文件名：KafkaSink
+ * 创建人：kris.chen
+ * 创建日期：2014-10-27 上午11:14:48
+ * 功能描述：根据规则，发送数据到kafka的sink
  *
  */
 public class KafkaSink extends AbstractSink implements Configurable {
@@ -41,6 +44,9 @@ public class KafkaSink extends AbstractSink implements Configurable {
 	private String topic;
 	
 	@Override
+	/**
+	 * 配置参数
+	 */
 	public void configure(Context context) {
 		batchSize = context.getInteger("batchSize", 1);
 		topic = context.getString("topic");
@@ -61,6 +67,10 @@ public class KafkaSink extends AbstractSink implements Configurable {
 	}
 	
 	@Override
+	/**
+	 * 具体的处理方法，对数据根据cookiedId转成int值，再通过分区函数划分到固定的kafka分区中
+	 * 根据batchsize进行批处理
+	 */
 	public Status process() throws EventDeliveryException {
 		Status status = Status.READY;
 		Channel channel = getChannel();
@@ -100,6 +110,7 @@ public class KafkaSink extends AbstractSink implements Configurable {
 				producer.send(batch);
 			}
 			tx.commit();
+			//log.info("-----------------kafkaSink done------------------------");
 		} catch (Exception e) {
 			log.error("KafkaSink Exception:{}", e);
 			tx.rollback();

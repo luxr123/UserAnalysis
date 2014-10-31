@@ -34,7 +34,7 @@ public class UserDataService {
 	private static Logger logger = LoggerFactory.getLogger(UserDataService.class);
 	
 	private UserVisitLog userVisitLog = new UserVisitLog(Servers.prop);
-	private AccessPaths accessPaths = new AccessPaths(Servers.ZOOKEEPER);
+	private AccessPaths accessPaths = new AccessPaths(Servers.prop);
 	private WebSiteDataService webSiteDataService = new WebSiteDataService();
 	private WebSiteService statsService = new WebSiteServiceImpl();
 

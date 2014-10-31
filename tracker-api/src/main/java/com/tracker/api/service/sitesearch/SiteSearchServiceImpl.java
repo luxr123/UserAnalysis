@@ -135,6 +135,7 @@ public class SiteSearchServiceImpl implements SiteSearchService{
 			stats.setName(conTypeMap.get(conType));
 			stats.setSearchCountRate(NumericUtil.getRateForPCT(stats.getSearchCount(), totalCount));
 			stats.setDate(TimeUtils.applyDescForTime(timeType, time));
+			stats.setFieldId(conType);
 			result.put(String.valueOf(conType), stats);
 		}
 		return result;

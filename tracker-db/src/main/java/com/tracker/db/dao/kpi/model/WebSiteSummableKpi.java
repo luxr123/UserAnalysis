@@ -10,62 +10,71 @@ import com.tracker.db.util.RowUtil;
 public class WebSiteSummableKpi  implements Serializable{
 	private static final long serialVersionUID = -8603052370936191904L;
 
+	/**
+	 * 文件名：Columns
+	 * 创建人：jason.hua
+	 * 创建日期：2014-10-27 下午12:41:18
+	 * 功能描述：存储在hbase中的各个列名
+	 *
+	 */
 	public static enum Columns{
 		pv, visitTimes, totalVisitTime, totalJumpCount, totalVisitPage
 	}
-	public static final String SIGN_ENTRY_PAGE = "entryPage";
-	public static final String SIGN_REF = "ref";
+	
+	/**
+	 * 标识值
+	 */
 	public static final String SIGN_BASIC = "basic";
+	public static final String SIGN_REF_KW = "ref-kw";
+	public static final String SIGN_ENTRY_PAGE = "entryPage";
 	public static final String SIGN_AREA = "area";
-	public static final String SIGN_SYS_BASIC = "sys-basic"; //浏览器、操作系统、屏幕颜色、是否支持cookie、语言环境
-	public static final String SIGN_SYS_SCREEN = "sys-screen";
+	public static final String SIGN_SYS_BASIC = "sys-env"; //浏览器、操作系统、屏幕颜色、是否支持cookie、语言环境、分辨率
 
+	/**
+	 * row中标识index值
+	 */
 	public static final int SIGN_INDEX = 0;
 
-	//公用指标
 	@HBaseColumn(qualifier = "pv", isIncrementType = true)
-	private Long pv;
+	private Long pv; //浏览量
 	
 	//会话指标
 	@HBaseColumn(qualifier = "visitTimes", isIncrementType = true)
-	private Long visitTimes;
+	private Long visitTimes; //访问次数
 	
 	@HBaseColumn(qualifier = "totalVisitTime", isIncrementType = true)
-	private Long totalVisitTime;
+	private Long totalVisitTime; //总访问时间
 	
 	@HBaseColumn(qualifier = "totalJumpCount", isIncrementType = true)
-	private Long totalJumpCount;
+	private Long totalJumpCount; //总跳出次数
 	
 	@HBaseColumn(qualifier = "totalVisitPage", isIncrementType = true)
-	private Long totalVisitPage;
+	private Long totalVisitPage; //总访问页数
 	
 	/**
-	 * 
-	 * 文件名：RefRowGenerator
+	 * 文件名：BasicRowGenerator
 	 * 创建人：jason.hua
-	 * 创建日期：2014-10-15 下午4:50:21
-	 * 功能描述：
-	 *
+	 * 创建日期：2014-10-15 下午4:53:10
+	 * 功能描述：基于日期、小时段、用户角色、来源类型、来源域名的row生成工具类
 	 */
-	public static class RefRowGenerator{
+	public static class BasicRowGenerator{
 		public static final int SIGN_INDEX = 0;
 		public static final int DATE_INDEX = 1;
 		public static final int WEB_ID_INDEX = 2;
 		public static final int VISITOR_TYPE_INDEX = 3;
-		public static final int REF_TYPE_INDEX = 4;
-		public static final int REF_DOMAIN_INDEX = 5;
-		public static final int REF_KEYWORD_INDEX = 6;
+		public static final int TIME_INDEX = 4;
+		public static final int USER_TYPE_INDEX = 5;
+		public static final int REF_TYPE_INDEX = 6;
+		public static final int REF_DOMAIN_INDEX = 7;
 
-		public static String generateRowKey(String date, String webId, Integer visitorType, Integer refType, String refDomain, String refKeyword){
-			return generateRowPrefix(date, webId, visitorType, refType, refDomain) + (refKeyword == null? "": refKeyword);
-		}
-
-		public static String generateRowPrefix(String date, String webId,Integer visitorType, Integer refType, String refDomain){
-			return generateRowPrefix(date, webId, visitorType, refType) + (refDomain == null? "": refDomain) + RowUtil.ROW_SPLIT;
-		}
-		
-		public static String generateRowPrefix(String date, String webId,Integer visitorType, Integer refType){
-			return generateRowPrefix(date, webId, visitorType) + refType + RowUtil.ROW_SPLIT;
+		public static String generateRowKey(String date, String webId, Integer visitorType, Integer time, Integer userType, Integer refType, String refDomain){
+			StringBuffer sb = new StringBuffer();
+			sb.append(generateRowPrefix(date, webId, visitorType));
+			sb.append(time).append(RowUtil.ROW_SPLIT);
+			sb.append(userType).append(RowUtil.ROW_SPLIT);
+			sb.append(refType).append(RowUtil.ROW_SPLIT);
+			sb.append(refDomain == null? "" : refDomain);
+			return sb.toString();
 		}
 		
 		public static String generateRowPrefix(String date, String webId,Integer visitorType){
@@ -73,17 +82,47 @@ public class WebSiteSummableKpi  implements Serializable{
 		}
 		
 		public static String generateRowPrefix(String date, String webId){
-			return generateRequiredRowPrefix(SIGN_REF, date, webId);
+			return generateRequiredRowPrefix(SIGN_BASIC, date, webId);
 		}
 	}
-
+	
 	/**
 	 * 
+	 * 文件名：KWRowGenerator
+	 * 创建人：jason.hua
+	 * 创建日期：2014-10-15 下午4:50:21
+	 * 功能描述：基于搜索词的row生成工具类
+	 */
+	public static class KWRowGenerator{
+		public static final int SIGN_INDEX = 0;
+		public static final int DATE_INDEX = 1;
+		public static final int WEB_ID_INDEX = 2;
+		public static final int VISITOR_TYPE_INDEX = 3;
+		public static final int REF_DOMAIN_INDEX = 4;
+		public static final int REF_KEYWORD_INDEX = 5;
+
+		public static String generateRowKey(String date, String webId, Integer visitorType, String refDomain, String refKeyword){
+			return generateRowPrefix(date, webId, visitorType, refDomain) + (refKeyword == null? "": refKeyword);
+		}
+
+		public static String generateRowPrefix(String date, String webId,Integer visitorType, String refDomain){
+			return generateRowPrefix(date, webId, visitorType) + refDomain + RowUtil.ROW_SPLIT;
+		}
+		
+		public static String generateRowPrefix(String date, String webId,Integer visitorType){
+			return generateRowPrefix(date, webId) + visitorType + RowUtil.ROW_SPLIT;
+		}
+		
+		public static String generateRowPrefix(String date, String webId){
+			return generateRequiredRowPrefix(SIGN_REF_KW, date, webId);
+		}
+	}
+	
+	/**
 	 * 文件名：EntryPageRowGenerator
 	 * 创建人：jason.hua
 	 * 创建日期：2014-10-15 下午4:50:41
-	 * 功能描述：
-	 *
+	 * 功能描述：基于入口页的row生成工具类
 	 */
 	public static class EntryPageRowGenerator{
 		public static final int SIGN_INDEX = 0;
@@ -106,41 +145,10 @@ public class WebSiteSummableKpi  implements Serializable{
 	}
 	
 	/**
-	 * 
-	 * 文件名：BasicRowGenerator
-	 * 创建人：jason.hua
-	 * 创建日期：2014-10-15 下午4:53:10
-	 * 功能描述：
-	 *
-	 */
-	public static class BasicRowGenerator{
-		public static final int SIGN_INDEX = 0;
-		public static final int DATE_INDEX = 1;
-		public static final int WEB_ID_INDEX = 2;
-		public static final int VISITOR_TYPE_INDEX = 3;
-		public static final int TIME_INDEX = 4;
-		public static final int USER_TYPE_INDEX = 5;
-
-		public static String generateRowKey(String date, String webId, Integer visitorType, Integer time, Integer userType){
-			return generateRowPrefix( date, webId, visitorType) + time + RowUtil.ROW_SPLIT + userType;
-		}
-		
-		public static String generateRowPrefix(String date, String webId,Integer visitorType){
-			return generateRowPrefix(date, webId) + visitorType + RowUtil.ROW_SPLIT;
-		}
-		
-		public static String generateRowPrefix(String date, String webId){
-			return generateRequiredRowPrefix(SIGN_BASIC, date, webId);
-		}
-	}
-	
-	/**
-	 * 
 	 * 文件名：AreaRowGenerator
 	 * 创建人：jason.hua
 	 * 创建日期：2014-10-16 上午10:12:44
-	 * 功能描述：
-	 *
+	 * 功能描述：基于地域的row生成工具类
 	 */
 	public static class AreaRowGenerator{
 		public static final int SIGN_INDEX = 0;
@@ -173,14 +181,12 @@ public class WebSiteSummableKpi  implements Serializable{
 	}
 	
 	/**
-	 * 
 	 * 文件名：SysBasicRowGenerator
 	 * 创建人：jason.hua
 	 * 创建日期：2014-10-15 下午5:07:26
-	 * 功能描述：
-	 *
+	 * 功能描述：基于系统环境的row生成工具类
 	 */
-	public static class SysBasicRowGenerator{
+	public static class SysEnvRowGenerator{
 		public static final int SIGN_INDEX = 0;
 		public static final int DATE_INDEX = 1;
 		public static final int WEB_ID_INDEX = 2;
@@ -190,19 +196,31 @@ public class WebSiteSummableKpi  implements Serializable{
 		public static final int LANGUAGE_INDEX = 6;
 		public static final int IS_ENABLE_COOKIE_INDEX = 7;
 		public static final int COLOR_DEPTH_INDEX = 8;
+		public static final int SCREEN_INDEX = 9;
 
-		public static String generateRowKey(String date, String webId, Integer visitorType, String os, String browser, String language, Boolean isEnableCookie, String colorDepth){
+		public static String generateRowKey(String date, String webId, Integer visitorType, String os, String browser, String language, 
+				Boolean isEnableCookie, String colorDepth, String screen){
 			if(os == null) os = "";
 			if(browser == null) browser = "";
 			if(language == null) 
 				language = "";
 			else 
 				language = language.toLowerCase();
+			if(screen == null) screen = "";
+			
 			String isEnableCookieStr = "";
 			if(isEnableCookie != null) isEnableCookieStr = isEnableCookie.toString();
 			if(colorDepth == null) colorDepth = "";
-			return generateRowPrefix(date, webId, visitorType) + os + RowUtil.ROW_SPLIT +
-					browser + RowUtil.ROW_SPLIT + language + RowUtil.ROW_SPLIT + isEnableCookieStr + RowUtil.ROW_SPLIT + colorDepth;
+			
+			StringBuffer sb = new StringBuffer();
+			sb.append(generateRowPrefix(date, webId, visitorType));
+			sb.append(os).append(RowUtil.ROW_SPLIT);
+			sb.append(browser).append(RowUtil.ROW_SPLIT);
+			sb.append(language).append(RowUtil.ROW_SPLIT);
+			sb.append(isEnableCookieStr).append(RowUtil.ROW_SPLIT);
+			sb.append(colorDepth).append(RowUtil.ROW_SPLIT);
+			sb.append(screen);
+			return sb.toString();
 		}
 		
 		public static String generateRowPrefix(String date, String webId,Integer visitorType){
@@ -214,35 +232,14 @@ public class WebSiteSummableKpi  implements Serializable{
 		}
 	}
 	
-	public static class SysScreenRowGenerator{
-		public static final int SIGN_INDEX = 0;
-		public static final int DATE_INDEX = 1;
-		public static final int WEB_ID_INDEX = 2;
-		public static final int VISITOR_TYPE_INDEX = 3;
-		public static final int SCREEN_INDEX = 4;
-
-		public static String generateRowKey(String date, String webId, Integer visitorType, String screen){
-			if(screen == null) screen = "";
-			return generateRowPrefix(date, webId, visitorType) + screen;
-		}
-		
-		public static String generateRowPrefix(String date, String webId,Integer visitorType){
-			return generateRowPrefix(date, webId) + visitorType + RowUtil.ROW_SPLIT;
-		}
-		
-		public static String generateRowPrefix(String date, String webId){
-			return generateRequiredRowPrefix(SIGN_SYS_SCREEN, date, webId);
-		}
-	}
-	
 	/**
 	 * 
 	 * 函数名：generateRequiredRowPrefix
-	 * 功能描述：
-	 * @param sign
-	 * @param date
-	 * @param webId
-	 * @param visitorType
+	 * 功能描述：公共row前缀生成方法
+	 * @param sign 标识
+	 * @param date 日期YYYYMMDD
+	 * @param webId 网站id
+	 * @param visitorType 新老访客类型
 	 * @return
 	 */
 	private static String generateRequiredRowPrefix(String sign, String date, String webId){

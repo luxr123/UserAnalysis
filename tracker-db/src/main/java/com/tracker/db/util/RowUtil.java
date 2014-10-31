@@ -29,7 +29,7 @@ public class RowUtil {
 	
 	public static String getRowField(String row, int index, String split){
 		String[] data = row.split(split);
-		if(data.length <= index)
+		if(data.length <= index || data[index].trim().length() == 0)
 			return null;
 		return data[index];
 	}

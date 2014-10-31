@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<!-- Licensed under the Apache License, Version 2.0 (the "License"); you 
+	may not use this file except in compliance with the License. You may obtain 
+	a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 Unless 
+	required by applicable law or agreed to in writing, software distributed 
+	under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES 
+	OR CONDITIONS OF ANY KIND, either express or implied. See the License for 
+	the specific language governing permissions and limitations under the License. 
+	See accompanying LICENSE file. -->
+<configuration>
+	
+	<!-- Configurations for resourceManager -->
+	<property>
+		<name>yarn.resourcemanager.hostname</name>
+		<value>10.100.50.163</value>
+	</property>	
+	<property>
+		<name>yarn.resourcemanager.scheduler.class</name>
+		<value>org.apache.hadoop.yarn.server.resourcemanager.scheduler.capacity.CapacityScheduler</value>
+		<description>CapacityScheduler, FairScheduler</description>
+	</property>	
+	<property>
+		<name>yarn.scheduler.minimum-allocation-mb</name>
+		<value>128</value>
+		<description>The minimum allocation for every container request at the RM, in MBs.</description>
+	</property>
+	<property>
+		<name>yarn.scheduler.maximum-allocation-mb</name>
+		<value>8192</value>
+		<description>The maximum allocation for every container request at the RM, in MBs</description>
+	</property>
+	<property>
+		<name>yarn.resourcemanager.recovery.enabled</name>
+		<value>true</value>
+		<description>Enable RM to recover state after starting. If true, then yarn.resourcemanager.store.class must be specified</description>
+	</property>	
+	<property>
+  		<name>yarn.resourcemanager.store.class</name>
+    	<value>org.apache.hadoop.yarn.server.resourcemanager.recovery.FileSystemRMStateStore</value>
+        <description>The class to use as the persistent store.</description>
+	</property>
+    <property>
+		<name>yarn.resourcemanager.fs.state-store.uri</name>
+    	<value>/tmp/yarn/system/rmstore</value>
+		<description>the FileSystem path where RM state will be stored</description>
+	</property>
+	<property>
+		<name>yarn.resourcemanager.scheduler.monitor.enable</name>
+		<value>true</value>
+	</property>	
+
+	<!-- Configurations for NodeManager -->
+	<property>
+		<name>yarn.nodemanager.resource.memory-mb</name>
+		<value>4000</value>
+		<description>Amount of physical memory, in MB, that can be allocated for containers.</description>
+	</property>
+	<property>
+		<name>yarn.nodemanager.vmem-pmem-ratio</name>
+		<value>2.1</value>
+		<description>Ratio between virtual memory to physical memory when setting memory limits for containers</description>
+	</property>	
+	<property>
+		<name>yarn.nodemanager.resource.cup-vcores</name>
+		<value>4</value>
+		<description>Number of CPU cores that can be allocated for containers</description>
+	</property>
+	<property>
+    	<name>yarn.nodemanager.vmem-check-enabled</name>
+    	<value>false</value>
+    	<description>Whether virtual memory limits will be enforced for containers.</description>
+ 	</property>
+	<property>
+		<name>yarn.nodemanager.aux-services</name>
+		<value>mapreduce_shuffle</value>
+		<description>Shuffle service that needs to be set for Map Reduce applications</description>
+	</property>
+
+	<!-- Configurations for log -->
+	<property>
+		<name>yarn.log-aggregation-enable</name>
+		<value>true</value>
+	</property>	
+   	<property>
+	    <name>yarn.log-aggregation.retain-seconds</name>
+		<value>607800</value>
+		<description>retain 7 days</description>
+	</property>
+    <property>
+        <name>yarn.log-aggregation.retain-check-interval-seconds</name>
+		<value>10800</value>
+		<description> interval 3 hours</description>
+	</property>
+	<property>
+	    <name>yarn.nodemanager.local-dirs</name>
+		<value>/home/hadoop/secondary/hadoop-2.2.0/tmp/nm-local-dirs</value>
+		<description>Comma-separated list of paths on the local filesystem where intermediate data is written </description>
+	</property>
+    <property>
+        <name>yarn.nodemanager.log-dirs</name>
+	    <value>/home/hadoop/secondary/hadoop-2.2.0/tmp/nm-log-dirs</value>
+	</property>	
+    <property>
+		<name>yarn.nodemanager.log.retain-seconds</name>
+		<value>10800</value>
+		<description>Time in seconds to retain user logs. Only applicable if log aggregation is disabled</description>
+	</property>
+    <property>
+	    <name>yarn.nodemanager.remote-app-log-dir</name>
+		<value>/tmp/logs</value>
+		<description>Where to aggregate logs to.</description>
+	</property>
+    <property>
+	    <name>yarn.nodemanager.remote-app-log-dir-suffix</name>
+		<value>logs</value>
+	</property>
+	<property>
+		<name>yarn.nodemanager.delete.debug-delay-sec</name>
+		<value>600</value>
+		<description> Number of seconds after an application finishes before the nodemanager's 
+     	DeletionService will delete the application's localized file directory and log directory.
+      	</description>
+	</property>	
+</configuration>

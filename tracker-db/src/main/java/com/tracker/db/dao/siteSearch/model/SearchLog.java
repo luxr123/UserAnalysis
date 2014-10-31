@@ -7,7 +7,7 @@ import java.util.Map;
 import com.tracker.common.constant.website.ReferrerType;
 import com.tracker.common.data.useragent.UserAgentUtil;
 import com.tracker.common.log.ApacheSearchLog;
-import com.tracker.common.log.ApacheSearchLog;
+import com.tracker.common.utils.EasyPartion;
 import com.tracker.db.simplehbase.annotation.HBaseColumn;
 import com.tracker.db.simplehbase.annotation.HBaseTable;
 import com.tracker.db.util.Util;
@@ -18,7 +18,7 @@ import com.tracker.db.util.Util;
  * @Version: [v1.0]
  * 
  */
-@HBaseTable(tableName = "log_website", defaultFamily = "infomation")
+@HBaseTable(tableName = "log_website_regions", defaultFamily = "infomation")
 public class SearchLog {
 	public static final String ROW_SPLIT = "-"; // char(16）用于分隔符
 
@@ -137,12 +137,13 @@ public class SearchLog {
 		Util.checkNull(userType);
 
 		StringBuffer sb = new StringBuffer();
+		sb.append(webId).append(ROW_SPLIT);
+		sb.append(EasyPartion.getPartition(cookieId,10)).append(ROW_SPLIT);
 		sb.append(Long.MAX_VALUE - serverLogTime).append(ROW_SPLIT);
 		sb.append(cookieId).append(ROW_SPLIT);
 		sb.append(userId == null ? "" : userId).append(ROW_SPLIT);
 		sb.append(userType).append(ROW_SPLIT);
 		sb.append(visitType).append(ROW_SPLIT);
-		sb.append(webId).append(ROW_SPLIT);
 		sb.append(randValue);
 		return sb.toString();
 	}

@@ -1,0 +1,20 @@
+if [ $# == 1 ]
+then
+echo -e "$1 jobs"
+else
+echo -e "input operation"
+exit
+esle
+fi
+initctl $1 nimbus 
+initctl $1 stormui
+echo -e "$1 supervisor on hadoop1"
+	ssh hadoop@dev-hadoop1 /usr/local/bin/monit $1 supervisor
+echo -e "$1 supervisor on hadoop2"
+	ssh hadoop@dev-hadoop2 /usr/local/bin/monit $1 supervisor
+echo -e "$1 supervisor on hadoop3"
+	ssh hadoop@dev-hadoop3 /usr/local/bin/monit $1 supervisor
+echo -e "$1 drpc on hadoop1"
+	ssh hadoop@dev-hadoop1 /usr/local/bin/monit $1 storm_drpc 
+echo -e "$1 drpc on hadoop2"
+	ssh hadoop@dev-hadoop2 /usr/local/bin/monit $1 storm_drpc 

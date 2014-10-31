@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.hadoop.hbase.util.Bytes;
-
 import com.tracker.common.log.UserVisitLogFields.FIELDS;
 import com.tracker.db.hbase.HbaseCRUD.HbaseResult;
 /**
@@ -40,5 +39,17 @@ public class WebSiteBaseTableAccess {
 		if(result == null || result.size() <= 0)
 			return null;
 		return result.getRawValue(result.getCurPos(), "infomation", item);
+	}
+	
+	public static String getBaseTableRowKey(HbaseResult result){
+		if(result == null || result.size() <= 0)
+			return null;
+		return result.getRowKey(result.getCurPos());
+	}
+	
+	public static byte[] getBaseTableField(HbaseResult result,FIELDS item){
+		if(result == null || result.size() <= 0)
+			return null;
+		return result.getRawValue(result.getCurPos(), "infomation", item.toString());
 	}
 }

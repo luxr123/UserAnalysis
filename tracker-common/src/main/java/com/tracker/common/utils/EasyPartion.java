@@ -16,4 +16,11 @@ public class EasyPartion {
 		}
 		return retVal % partitions;
 	}
+	public static Integer getPartition(String input,int numPartitions){
+		Integer retVal = 0;
+		for(char c:input.toCharArray()){
+			retVal +=c;
+		}
+		return retVal % numPartitions;
+	}
 }

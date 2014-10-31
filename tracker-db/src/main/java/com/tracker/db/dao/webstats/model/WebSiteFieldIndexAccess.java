@@ -2,9 +2,7 @@ package com.tracker.db.dao.webstats.model;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import org.apache.hadoop.hbase.util.Bytes;
-
 import com.tracker.common.log.UserVisitLogFields;
 import com.tracker.common.log.UserVisitLogFields.INDEX_FIELDS;
 import com.tracker.db.hbase.HbaseCRUD.HbaseResult;
@@ -29,12 +27,11 @@ public class WebSiteFieldIndexAccess {
 	 * @param visitType
 	 * @return
 	 */
-	private static String getFieldsIndexValue(HbaseResult result,String family,INDEX_FIELDS fields,Integer visitType){
+	private static Object getFieldsIndexValue(HbaseResult result,String family,INDEX_FIELDS fields,Integer visitType){
 		if(result == null  || result.size() == 0)
 			return null;
 		String retVal = null;
 		byte[] tmp  = null;
-		Long value = null;
 		String quality = fields.toString();
 		switch(fields){
 		//add get visitTime operation
@@ -42,36 +39,20 @@ public class WebSiteFieldIndexAccess {
 			tmp = result.getRawValue(result.getCurPos(), family, quality);
 			if(tmp == null)
 				return null;
-			value = Bytes.toLong(tmp);
-			if(value != null)
-				retVal = value.toString();
-			break;
+			return Bytes.toLong(tmp);
 		case count:
 			if(visitType != null && visitType > 0)
 				quality = fields + "_" + visitType;
 			tmp = result.getRawValue(result.getCurPos(), family, quality);
 			if(tmp == null)
 				return null;
-			value= Bytes.toLong(tmp);
-			if(value != null)
-				retVal = value.toString();
-			break;
+			return Bytes.toLong(tmp);
 		case keyList:
 			Integer type = null;
 			if(visitType ==null || visitType == 0){
-				byte tmpArray[] = result.getRawValue(result.getCurPos(), family, INDEX_FIELDS.visitType.toString());
+				byte tmpArray[] = result.getRawValue(result.getCurPos(), UserVisitLogFields.Index_InfoFam, INDEX_FIELDS.visitType.toString());
 				if(tmpArray != null){
 					type = Integer.parseInt(Bytes.toString(tmpArray));
-				}else{
-					// get the last timeStamp one
-					Long compOne = null;
-					for(int i = 1; i< 4 ;i++){
-						Long ltmp = result.getTimeStamp(result.getCurPos(), family, fields.toString() + "_" + i);
-						if(ltmp != null && (compOne == null || ltmp > compOne)){
-							compOne = ltmp;
-							type = i;
-						}
-					}
 				}
 			}else{
 				type = visitType;
@@ -161,7 +142,7 @@ public class WebSiteFieldIndexAccess {
 	 * @return
 	 */
 	public static String getFieldsIndex_Record(HbaseResult result){
-		return getFieldsIndexValue(result,UserVisitLogFields.Index_Family,INDEX_FIELDS.keyList,null);
+		return (String)getFieldsIndexValue(result,UserVisitLogFields.Index_Family,INDEX_FIELDS.keyList,null);
 	}
 	/**
 	 * 
@@ -174,7 +155,7 @@ public class WebSiteFieldIndexAccess {
 	public static String getFieldsIndex_RecordByVisitType(HbaseResult result,Integer visitType){
 		//if visitType is null return the most recently data
 		//else return the most recentlyt data by visitType
-		return getFieldsIndexValue(result,UserVisitLogFields.Index_Family,INDEX_FIELDS.keyList,visitType);
+		return (String)getFieldsIndexValue(result,UserVisitLogFields.Index_Family,INDEX_FIELDS.keyList,visitType);
 	}
 	/**
 	 * 
@@ -215,9 +196,9 @@ public class WebSiteFieldIndexAccess {
 	 * @return
 	 */
 	public static Long getFieldsIndexCount(HbaseResult result){
-		String str = getFieldsIndexValue(result,UserVisitLogFields.Index_InfoFam,INDEX_FIELDS.count,null);
-		if(str != null)
-			return Long.parseLong(str);
+		Long ret = (Long)getFieldsIndexValue(result,UserVisitLogFields.Index_InfoFam,INDEX_FIELDS.count,null);
+		if(ret != null)
+			return ret;
 		else
 			return 0L;
 	}
@@ -230,9 +211,9 @@ public class WebSiteFieldIndexAccess {
 	 * @return
 	 */
 	public static Long getFieldsIndexCount(HbaseResult result,Integer visitType){
-		String str = getFieldsIndexValue(result,UserVisitLogFields.Index_InfoFam,INDEX_FIELDS.count,visitType);
-		if(str != null)
-			return Long.parseLong(str);
+		Long ret= (Long)getFieldsIndexValue(result,UserVisitLogFields.Index_InfoFam,INDEX_FIELDS.count,visitType);
+		if(ret != null)
+			return ret;
 		else
 			return 0L;
 	}
@@ -244,9 +225,9 @@ public class WebSiteFieldIndexAccess {
 	 * @return
 	 */
 	public static Long getFieldsIndexVisitTime(HbaseResult result){
-		String str = getFieldsIndexValue(result,UserVisitLogFields.Index_InfoFam,INDEX_FIELDS.visitTime,null);
-		if(str != null)
-			return Long.parseLong(str);
+		Long ret = (Long)getFieldsIndexValue(result,UserVisitLogFields.Index_InfoFam,INDEX_FIELDS.visitTime,null);
+		if(ret != null)
+			return ret;
 		else
 			return 0L;
 	}

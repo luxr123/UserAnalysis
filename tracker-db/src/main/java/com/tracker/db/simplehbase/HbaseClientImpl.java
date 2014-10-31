@@ -2,11 +2,11 @@ package com.tracker.db.simplehbase;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.hadoop.hbase.client.Delete;
+import org.apache.hadoop.hbase.client.Durability;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HConnection;
 import org.apache.hadoop.hbase.client.HTableInterface;
@@ -257,7 +257,6 @@ public class HbaseClientImpl extends HbaseClient {
 
         TypeInfo typeInfo = TypeInfoHolder.findTypeInfo(putRequestList.get(0).getT().getClass());
         List<Row> actions = new ArrayList<Row>();
-//        List<Put> puts = new ArrayList<Put>();
         for (PutRequest<T> putRequest : putRequestList) {
         	byte[] row = Bytes.toBytes(putRequest.getRowKey());
             Put put = null;
@@ -267,8 +266,10 @@ public class HbaseClientImpl extends HbaseClient {
                 	Long value = convertPOJOFieldToLong(putRequest.getT(),columnInfo);
                 	if(value == null)
                 		continue;
-                	if(increment == null)
+                	if(increment == null){
                 		increment = new Increment(row);
+                	}
+                	
                 	increment.addColumn(columnInfo.familyBytes, columnInfo.qualifierBytes, value);
                 } else {
                     byte[] value = convertPOJOFieldToBytes(putRequest.getT(),columnInfo);
@@ -284,7 +285,6 @@ public class HbaseClientImpl extends HbaseClient {
                     }
                 }
             }
-//            puts.add(put);
             if(put != null)
             	actions.add(put);
             if(increment != null)
@@ -293,7 +293,6 @@ public class HbaseClientImpl extends HbaseClient {
 
         HTableInterface htableInterface = htableInterface();
         try {
-//            htableInterface.put(puts);
         	htableInterface.batch(actions);
         } catch (IOException e) {
             throw new SimpleHBaseException("putObjectList_internal. putRequestList=" + putRequestList, e);
